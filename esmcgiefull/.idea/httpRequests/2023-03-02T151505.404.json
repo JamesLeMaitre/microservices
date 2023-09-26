@@ -1,0 +1,8 @@
+{
+  "timestamp": "2023-03-02T15:15:05.409+00:00",
+  "path": "/api/v1/add/products",
+  "status": 404,
+  "error": "Not Found",
+  "message": null,
+  "requestId": "e97763ce-1"
+}

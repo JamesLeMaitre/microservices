@@ -1,0 +1,5 @@
+/config/target
+/discovery/target
+/security-service/target
+/security-utils/target
+/gateway/target

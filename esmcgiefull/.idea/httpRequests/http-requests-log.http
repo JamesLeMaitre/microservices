@@ -1,0 +1,129 @@
+POST http://localhost:8888/AVR-SERVICE/api/v1/add/products
+Content-Type: application/json
+Authorization: "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMSIsInJvbGVzIjpbXSwiaXNzIjoiaHR0cDovL2hvc3QuZG9ja2VyLmludGVybmFsOjgwODEvbG9naW4iLCJleHAiOjE2Nzg2NzE1NjB9.lLzN9FFUsZl8TO6EX8qEOjGygFF4xm7LIyPazdCW4JM"
+Content-Length: 201
+Connection: Keep-Alive
+User-Agent: Apache-HttpClient/4.5.13 (Java/17.0.5)
+Cookie: JSESSIONID=D091AAA851E5AE26DA441906B68FEB17
+Accept-Encoding: br,deflate,gzip,x-gzip
+
+{
+  "libelle": "libelle",
+  "quantity": 10,
+  "unitPrice": 450.0,
+  "description": "description",
+  "idDetailAgr": 7,
+  "idDetailAgrFranchise": 3,
+  "categorieAvr": {"id": 1},
+  "typeAvrs": {"id": 1}
+}
+
+<> 2023-03-02T152014.403.json
+
+###
+
+POST http://localhost:8888/AVR-SERVICE/api/v1/add/products
+Content-Type: application/json
+Authorization: "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMSIsInJvbGVzIjpbXSwiaXNzIjoiaHR0cDovL2hvc3QuZG9ja2VyLmludGVybmFsOjgwODEvbG9naW4iLCJleHAiOjE2Nzg2NzE1NjB9.lLzN9FFUsZl8TO6EX8qEOjGygFF4xm7LIyPazdCW4JM"
+Content-Length: 201
+Connection: Keep-Alive
+User-Agent: Apache-HttpClient/4.5.13 (Java/17.0.5)
+Cookie: JSESSIONID=D091AAA851E5AE26DA441906B68FEB17
+Accept-Encoding: br,deflate,gzip,x-gzip
+
+{
+  "libelle": "libelle",
+  "quantity": 10,
+  "unitPrice": 450.0,
+  "description": "description",
+  "idDetailAgr": 7,
+  "idDetailAgrFranchise": 3,
+  "categorieAvr": {"id": 1},
+  "typeAvrs": {"id": 1}
+}
+
+<> 2023-03-02T152009.403.json
+
+###
+
+POST http://localhost:8888/AVR-SERVICE/api/v1/add/products
+Content-Type: application/json
+Content-Length: 201
+Connection: Keep-Alive
+User-Agent: Apache-HttpClient/4.5.13 (Java/17.0.5)
+Cookie: JSESSIONID=D091AAA851E5AE26DA441906B68FEB17
+Accept-Encoding: br,deflate,gzip,x-gzip
+
+{
+  "libelle": "libelle",
+  "quantity": 10,
+  "unitPrice": 450.0,
+  "description": "description",
+  "idDetailAgr": 7,
+  "idDetailAgrFranchise": 3,
+  "categorieAvr": {"id": 1},
+  "typeAvrs": {"id": 1}
+}
+
+<> 2023-03-02T151840.403.json
+
+###
+
+POST http://localhost:8888/api/v1/add/products
+Content-Type: application/json
+Content-Length: 201
+Connection: Keep-Alive
+User-Agent: Apache-HttpClient/4.5.13 (Java/17.0.5)
+Cookie: JSESSIONID=D091AAA851E5AE26DA441906B68FEB17
+Accept-Encoding: br,deflate,gzip,x-gzip
+
+{
+  "libelle": "libelle",
+  "quantity": 10,
+  "unitPrice": 450.0,
+  "description": "description",
+  "idDetailAgr": 7,
+  "idDetailAgrFranchise": 3,
+  "categorieAvr": {"id": 1},
+  "typeAvrs": {"id": 1}
+}
+
+<> 2023-03-02T151750.404.json
+
+###
+
+POST http://localhost:8888/api/v1/add/products
+Content-Type: application/json
+Content-Length: 201
+Connection: Keep-Alive
+User-Agent: Apache-HttpClient/4.5.13 (Java/17.0.5)
+Cookie: JSESSIONID=D091AAA851E5AE26DA441906B68FEB17
+Accept-Encoding: br,deflate,gzip,x-gzip
+
+{
+  "libelle": "libelle",
+  "quantity": 10,
+  "unitPrice": 450.0,
+  "description": "description",
+  "idDetailAgr": 7,
+  "idDetailAgrFranchise": 3,
+  "categorieAvr": {"id": 1},
+  "typeAvrs": {"id": 1}
+}
+
+<> 2023-03-02T151505.404.json
+
+###
+
+DELETE http://localhost:8080/api/avrs/delete/112
+
+###
+
+DELETE http://localhost:8080/api/avrs/delete/112
+
+###
+
+DELETE http://localhost:8080/api/avrs/delete/{{112}}
+
+###
+

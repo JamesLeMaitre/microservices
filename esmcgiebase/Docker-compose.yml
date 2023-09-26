@@ -1,0 +1,30 @@
+version: "2.2"
+
+services:
+  servers:
+    container_name: servers
+    hostname: servers
+    image: dockerptic2022/app-esmc:base
+    restart: always
+    ports:
+
+      - "8761:8761"
+      - "8888:8888"
+      - "9999:9999"
+      - "8081:8081"
+    #      extra_hosts:
+    #        - "PC:192.168.1.66"
+    environment:
+      - EUREKA_SERVER= http://192.168.22.229:8761/eureka/
+      - CONFIG_SERVER= http://192.168.22.229:9999/
+    volumes:
+      - C:\esmc-config-dev:/spring-config/
+    networks:
+      - my-srv-net
+#volumes:
+# mysql_volume:
+# Names our networks
+networks:
+  my-srv-net:
+    #   external:
+    name: mysql-server-net

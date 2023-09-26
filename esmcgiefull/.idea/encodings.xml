@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$MAVEN_REPOSITORY$/org/springframework/cloud/spring-cloud-config-dependencies/3.0.0/src/main/java" charset="UTF-8" />
+    <file url="file://$MAVEN_REPOSITORY$/org/springframework/cloud/spring-cloud-config-dependencies/3.0.0/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/demandeachatbanksu/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/demandeachatbanksu/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionAgr/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionAgr/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionCertification/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionCertification/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionContrat/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionContrat/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionFranchise/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionFranchise/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionachatfranchise/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionachatfranchise/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionavr/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionavr/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionformation/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionformation/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionksu/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionksu/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionmembre/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionmembre/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionpayement/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionpayement/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionte/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gestionte/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mobileMoneyCredit/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mobileMoneyCredit/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mobileMoneyDebit/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mobileMoneyTransaction/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/payment-gateway/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/payment-gateway/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
+  </component>
+</project>

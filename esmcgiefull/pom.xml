@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.esmc</groupId>
+    <artifactId>esmcgiefull</artifactId>
+    <version>1.0</version>
+    <packaging>pom</packaging>
+    <modules>
+        <module>demandeachatbanksu</module>
+        <module>gestionpayement</module>
+        <module>gestionksu</module>
+        <module>gestionavr</module>
+        <module>gestionte</module>
+        <module>gestionachatfranchise</module>
+        <module>gestionmembre</module>
+        <module>gestionAgr</module>
+        <module>gestionformation</module>
+        <module>gestionFranchise</module>
+        <module>gestionContrat</module>
+        <module>gestionCertification</module>
+        <module>esmc-model</module>
+        <module>esmc-utils</module>
+<!--        <module>payment-gateway</module>-->
+        <module>mobileMoneyCredit</module>
+    </modules>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+</project>

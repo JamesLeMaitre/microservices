@@ -1,0 +1,19 @@
+#Files
+*.jpg
+*.pdf
+*.png
+*.mp3
+*.mp4
+*.jar
+*.jpeg
+*.exe
+*.bin
+*.war
+# Directories to ignore
+/doc-pdf-certification/
+
+.build/
+.env/
+/gestionte/target/
+/demandeachatbanksu/target/
+

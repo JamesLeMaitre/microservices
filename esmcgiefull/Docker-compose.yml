@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  esmc-full:
+    container_name: esmc-full
+    hostname: esmc-full
+    image: esmc/gie-full
+    ports:
+      - "9080:9080"
+      - "9005:9005"
+      - "9002:9002"
+      - "9003:9003"
+      - "9013:9013"
+      - "9010:9010"
+      - "9008:9008"
+      - "9006:9006"
+      - "9001:9001"
+      - "9004:9004"
+      - "9007:9007"
+    #extra_hosts:
+           #- "192.168.17.86:172.27.16.1"
+    environment:
+      - EUREKA_SERVER= http://servers:8761/eureka/
+      - CONFIG_SERVER= http://servers:9999
+    volumes:
+      - /home/ubuntu/folder:/tmp/files
+    networks:
+      - srv-net
+#volumes:
+# esmc-full-volume:
+#   external: true
+networks:
+  srv-net:
+    external:
+      name: mysql-server-net

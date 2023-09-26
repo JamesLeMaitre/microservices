@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="gestionAgr" />
+        <module name="gestionPayement" />
+        <module name="gestionTe" />
+        <module name="fifo" />
+        <module name="gestionKsu" />
+        <module name="mobileMoneyTransaction" />
+        <module name="gestionAchatFranchise" />
+        <module name="payment-gateway" />
+        <module name="gestionContrat" />
+        <module name="gestionMembre" />
+        <module name="mobileMoneyCredit" />
+        <module name="gestionAvr" />
+        <module name="demandeAchatBanKsu" />
+        <module name="esmc-utils" />
+        <module name="gestionformation" />
+        <module name="gestionFranchise" />
+        <module name="esmc-model" />
+        <module name="gestionCertification" />
+        <module name="gestionFifo" />
+        <module name="mobileMoneyDebit" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="demo" target="1.8" />
+      <module name="fifo" target="17" />
+      <module name="gestionOrgane" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="demandeAchatBanKsu" options="-parameters" />
+      <module name="demo" options="-parameters" />
+      <module name="esmc-utils" options="" />
+      <module name="fifo" options="-parameters" />
+      <module name="gestionAchatFranchise" options="-parameters" />
+      <module name="gestionAgr" options="-parameters" />
+      <module name="gestionAvr" options="-parameters" />
+      <module name="gestionCertification" options="-parameters" />
+      <module name="gestionContrat" options="-parameters" />
+      <module name="gestionFifo" options="-parameters" />
+      <module name="gestionFranchise" options="-parameters" />
+      <module name="gestionKsu" options="-parameters" />
+      <module name="gestionMembre" options="-parameters" />
+      <module name="gestionOrgane" options="-parameters" />
+      <module name="gestionPayement" options="-parameters" />
+      <module name="gestionTe" options="-parameters" />
+      <module name="gestionformation" options="-parameters" />
+      <module name="mobileMoneyCredit" options="-parameters" />
+      <module name="mobileMoneyCredit (1)" options="-parameters" />
+      <module name="mobileMoneyDebit" options="-parameters" />
+      <module name="mobileMoneyTransaction" options="-parameters" />
+      <module name="payment-gateway" options="" />
+    </option>
+  </component>
+</project>

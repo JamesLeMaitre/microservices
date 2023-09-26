@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  security:
+    container_name: security
+    hostname: security
+    image: esmc/security
+    restart: always
+    ports:
+         - "8081:8081"
+    #      extra_hosts:
+    #        - "PC:192.168.1.66"
+    environment:
+      - EUREKA_SERVER= http://servers:8761/eureka/
+      - CONFIG_SERVER= http://servers:9999/
+    volumes:
+      - C:\esmc-config-dev:/spring-config
+    networks:
+      - my-security-net
+#volumes:
+# mysql_volume:
+# Names our networks
+networks:
+  my-security-net:
+    external:
+     name: mysql-server-net

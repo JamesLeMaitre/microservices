@@ -1,0 +1,2970 @@
+package com.esmc.gestionAchatFranchise.services;
+
+import com.esmc.gestionAchatFranchise.entities.*;
+import com.esmc.gestionAchatFranchise.entities.felm.Affectation.*;
+import com.esmc.gestionAchatFranchise.entities.felm.fill.FillChaineDistribution;
+import com.esmc.gestionAchatFranchise.entities.felm.fill.FillChaineValeur;
+import com.esmc.gestionAchatFranchise.entities.felm.fill.FillInstitution;
+import com.esmc.gestionAchatFranchise.entities.felm.flbOe.FlbOeChaineDistribution;
+import com.esmc.gestionAchatFranchise.entities.felm.flbOe.FlbOeChaineValeur;
+import com.esmc.gestionAchatFranchise.entities.felm.flbOe.FlbOeChambre;
+import com.esmc.gestionAchatFranchise.entities.felm.flbOse.FlbOseAgenceOdd;
+import com.esmc.gestionAchatFranchise.entities.felm.flbOse.FlbOseCible;
+import com.esmc.gestionAchatFranchise.entities.felm.flbOse.FlbOseIndicateur;
+import com.esmc.gestionAchatFranchise.inputs.*;
+import com.esmc.gestionAchatFranchise.repositories.affectation.*;
+import com.esmc.gestionAchatFranchise.servicesinterfaces.ContinentInt;
+import com.esmc.gestionAchatFranchise.servicesinterfaces.StatistiqueInterface;
+import com.esmc.gestionAchatFranchise.servicesinterfaces.felm.fill.FillChaineDistributionInterface;
+import com.esmc.gestionAchatFranchise.servicesinterfaces.felm.fill.FillChaineValeurInterface;
+import com.esmc.gestionAchatFranchise.servicesinterfaces.felm.fill.FillInstitutionInterface;
+import com.esmc.gestionAchatFranchise.servicesinterfaces.felm.flboe.FlbOeChaineDistributionInterface;
+import com.esmc.gestionAchatFranchise.servicesinterfaces.felm.flboe.FlbOeChaineValeurInterface;
+import com.esmc.gestionAchatFranchise.servicesinterfaces.felm.flboe.FlbOeChambreInterface;
+import com.esmc.gestionAchatFranchise.servicesinterfaces.felm.flbose.FlbOseAgenceOddInterface;
+import com.esmc.gestionAchatFranchise.servicesinterfaces.felm.flbose.FlbOseCibleInterface;
+import com.esmc.gestionAchatFranchise.servicesinterfaces.felm.flbose.FlbOseIndicateurInterface;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+
+@Service
+public class StatistiqueService implements StatistiqueInterface {
+
+    @Autowired
+    private FillChaineDistributionInterface fillChaineDistributionInterface;
+
+    @Autowired
+    private FillChaineValeurInterface fillChaineValeurInterface;
+
+    @Autowired
+    private FillInstitutionInterface fillInstitutionInterface;
+
+    @Autowired
+    private FlbOseAgenceOddInterface flbOseAgenceOddInterface;
+
+    @Autowired
+    private FlbOseCibleInterface flbOseCibleInterface;
+
+    @Autowired
+    private FlbOseIndicateurInterface flbOseIndicateurInterface;
+
+    @Autowired
+    private FlbOeChaineDistributionInterface flbOeChaineDistributionInterface;
+
+    @Autowired
+    private FlbOeChaineValeurInterface flbOeChaineValeurInterface;
+
+    @Autowired
+    private FlbOeChambreInterface flbOeChambreInterface;
+
+
+    @Autowired
+    public CantonImp cantonImp;
+
+    @Autowired
+    public CommuneImp communeImp;
+    @Autowired
+    public PrefectureImp prefectureImp;
+
+    @Autowired
+    public RegionImp regionImp;
+
+    @Autowired
+    public PaysImp paysImp;
+    @Autowired
+    public ZoneMonnetaireImp zoneMonnetaireImp;
+
+    @Autowired
+    public ContinentInt continentInt;
+
+    @Autowired
+    public StatistiqueInterface statistiqueInterface;
+
+    //Repositories
+
+    @Autowired
+    public CibleInstitutionRepository cibleInstitutionRepository;
+
+    @Autowired
+    public CibleChambreRepository cibleChambreRepository;
+
+    @Autowired
+    public IndicateurInstitutionRepository indicateurInstitutionRepository;
+
+    @Autowired
+    public IndicateurChambreRepository indicateurChambreRepository;
+
+    @Autowired
+    public AffectationFranchiseRepository affectationFranchiseRepository;
+
+
+    public class EnumsValue {
+        public static final int COMMUNE = 391;
+        public static final int REGION = 390+117+39+1;
+        public static final int PREFECTURE = 390+117+1;
+        public static final int CANTON = 1;
+        public static final int PAYS = 553;
+    }
+    @Override
+    public int getFillDistribution() {
+        return 1;
+    }
+
+    @Override
+    public int getFillChaineValeur(Long id) {
+        int count = this.fillChaineDistributionInterface.getListByChaineValeurId(id).size() +1;
+        return count;
+    }
+
+    @Override
+    public int getFillPartenaireOdd(Long id) {
+        int count = this.fillChaineValeurInterface.getNbDistributorByPartenId(id) + 1;
+        return count;
+    }
+
+
+
+
+    public void recursiveFill (jsonFillCV [] fillCVS, FillInstitution fillInstitution1, FillChaineValeur fillChaineValeur2, jsonFillCD[] fillCDS){
+
+        for(jsonFillCV jsonFillCV : fillCVS) {
+            FillChaineValeur fillChaineValeur = new FillChaineValeur();
+            fillChaineValeur.setCode(jsonFillCV.getCode());
+            fillChaineValeur.setLibelle(jsonFillCV.getLibelle());
+            fillChaineValeur.setDescription(jsonFillCV.getDescription());
+            if(fillChaineValeur2 != null){
+                fillChaineValeur.setIds(fillChaineValeur2.getId());
+            }
+            fillChaineValeur.setIdInstitution(fillInstitution1.getId());
+            FillChaineValeur fillChaineValeur1 = this.fillChaineValeurInterface.create(fillChaineValeur);
+
+            jsonFillCV [] fillCVS1 = jsonFillCV.getChild();
+
+            for(jsonFillCD fillCD : fillCDS) {
+                String libelle = fillChaineValeur.getLibelle() + " chaine de distribution "+fillCD.getLibelle();
+                FillChaineDistribution fillChaineDistributor = new FillChaineDistribution();
+                fillChaineDistributor.setCode(fillCD.getCode());
+                fillChaineDistributor.setLibelle(libelle);
+                fillChaineDistributor.setDescription(libelle);
+                fillChaineDistributor.setIdChaineValeur(fillChaineValeur1.getId());
+                this.fillChaineDistributionInterface.create(fillChaineDistributor);
+
+            }
+
+            if(fillCVS1 != null && fillCVS1.length>0){
+                recursiveFill(fillCVS1, fillInstitution1, fillChaineValeur1, fillCDS);
+            }
+
+
+                /*jsonFillCD[] jsonFillCD = jsonFillCV.getChild();
+                for(jsonFillCD fillCD : jsonFillCD) {
+                    FillChaineDistribution fillChaineDistributor = new FillChaineDistribution();
+                    fillChaineDistributor.setCode(fillCD.getCode());
+                    fillChaineDistributor.setLibelle(fillCD.getLibelle());
+                    fillChaineDistributor.setDescription(fillCD.getDescription());
+                    fillChaineDistributor.setIdChaineValeur(fillChaineValeur1.getId());
+                    this.fillChaineDistributionInterface.create(fillChaineDistributor);
+
+                }*/
+
+        }
+    }
+
+
+
+    @Override
+    public void initFilesFill(jsonFil fil) {
+        jsonInstitution [] institutions = fil.getData();
+        for(jsonInstitution jsonInstitution : institutions){
+            FillInstitution fillInstitution = new FillInstitution();
+            fillInstitution.setCode(jsonInstitution.getCode());
+            fillInstitution.setLibelle(jsonInstitution.getLibelle());
+            fillInstitution.setDescription(jsonInstitution.getDescription());
+            FillInstitution fillInstitution1 = this.fillInstitutionInterface.create(fillInstitution);
+
+            jsonFillCV [] fillCVS = jsonInstitution.getChild();
+            jsonFillCD[] fillCDS = fil.getCd();
+            if(fillCVS != null && fillCVS.length>0){
+                recursiveFill(fillCVS, fillInstitution1, null, fillCDS);
+            }
+        }
+    }
+    @Override
+    public void initDecoupage() {
+        Long defaultId = 6l;
+        List<Pays> paysList = this.paysImp.getPays();
+        System.out.println(paysList);
+            List<Region> regionList = this.regionImp.listPays(defaultId);
+        System.out.println(regionList);
+            for(Region region: regionList){
+                for(Pays p : paysList){
+                    if(p.getId() !=defaultId){
+                        Region region1 = new Region();
+                        region1.setPays(p);
+                        region1.setLibelle("Region "+p.getLibelle());
+                        Region region2 = regionImp.addRegion(region1);
+                        List<Prefecture> prefectureList = prefectureImp.listRegion(region.getId());
+                        for(Prefecture prefecture : prefectureList){
+                            Prefecture prefecture1 = new Prefecture();
+                            prefecture1.setLibelle("Prefecture "+p.getLibelle());
+                            prefecture1.setRegion(region2);
+                            Prefecture prefecture2 = prefectureImp.addPrefecture(prefecture1);
+
+                            List<Commune> communeList = communeImp.listPrefecture(prefecture.getId());
+                            for(Commune commune : communeList){
+                                Commune commune1 = new Commune();
+                                commune1.setLibelle("Commune "+p.getLibelle());
+                                commune1.setPrefecture(prefecture2);
+                                Commune commune2 = communeImp.addCommune(commune1);
+
+                                List<Canton> cantonList = cantonImp.listCommune(commune.getId());
+                                Canton canton = new Canton();
+                                canton.setLibelle("Canton "+p.getLibelle());
+                                canton.setCommune(commune2);
+                                Canton canton1 = cantonImp.addCanton(canton);
+                            }
+                        }
+                    }
+                    }
+
+        }
+
+    }
+
+
+    @Override
+    public void initPlugFilesFill() {
+        List<FillInstitution> institutions = this.fillInstitutionInterface.getAll() ;
+        for(FillInstitution institution : institutions){
+            String [] listChaineValue = {
+
+                    "APL R&D CONSEIL GESTION GENERAL",
+                    "APL R&D CONSEIL GESTION SECRETARIAT PARTICULIER  GESTION GENERAL",
+                    "APL R&D CONSEIL GESTION COURRIERS",
+                    "APL R&D CONSEIL GESTION SECRETARIAT GENERAL  GESTION GENERAL",
+                    "APL R&D CONSEIL GESTION STANDARD",
+                    "APL R&D CONSEIL GESTION COURSIER",
+                    "APL R&D CONSEIL GESTION SERVICES GENERAUX",
+                    "APL R&D CONSEIL GESTION SECURITE",
+                    "APL R&D CONSEIL GESTION PARC AUTO",
+                    "APL R&D CONSEIL GESTION CHAUFFEUR",
+                    "APL R&D CONSEIL GESTION CONSEIL DE SURVEILLANCE SPECIALISEE",
+                    "APL R&D CONSEIL GESTION REGLEMENTATION",
+                    "APL R&D CONSEIL GESTION SUPERVISION",
+                    "APL R&D CONSEIL GESTION PROTECTION",
+                    "APL R&D CONSEIL GESTION CONSEIL DE SURVEILLANCE SPECIALISEE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION REGLEMENTATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SUPERVISION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PROTECTION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONSEIL DE SURVEILLANCE SPECIALISEE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION REGLEMENTATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SUPERVISION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PROTECTION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONSEIL DE SURVEILLANCE SPECIALISEE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION REGLEMENTATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SUPERVISION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PROTECTION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONSEIL DE DIVISIONS",
+                    "APL R&D CONSEIL GESTION SECRETARIAT GENERAL CONSEIL DE DIVISIONS",
+                    "APL R&D CONSEIL GESTION SECRETARIAT GENERAL STANDARD",
+                    "APL R&D CONSEIL GESTION SECRETARIAT GENERAL COURSIER",
+                    "APL R&D CONSEIL GESTION SECRETARIAT GENERAL SERVICES GENERAUX",
+                    "APL R&D CONSEIL GESTION SECRETARIAT GENERAL SECURITE",
+                    "APL R&D CONSEIL GESTION SECRETARIAT GENERAL PARC AUTO",
+                    "APL R&D CONSEIL GESTION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION TECHNOPOLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ACHATS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PASSATION DE CONTRAT DE FOURNISSEURS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SUIVI DES CONTRATS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SUIVI DES DELAIS DE LIVRAISON DES COMMANDES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ACHAT DE BPS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION RECEPTION D’UNE LIVRAISON DE BPS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TRAITEMENT D’UNE FACTURE FOURNISSEUR DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION STOCKS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DES STOCKS BPS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DES BPS DE TOUTE NATURE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DE CARBURANT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION IMMOBILISATIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PRINCIPES GENERAUX DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DES ENTREES DES IMMOBILISATIONS ET DU MATERIEL ROULANT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DES SORTIES DES IMMOBILISATIONS ET DU MATERIEL ROULANT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ENTRETIEN ET REPARATION DES IMMOBILISATIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SECURISATION DES IMMOBILISATIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DES VEHICULES ET DES MOTOS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DES OT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION RECRUTEMENT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TENUE DU DOSSIER DES  GESTIONS OT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FRAIS DE PRESTATIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONGES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION AUTRES AUTORISATIONS D’ABSENCES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION RUPTURE DU CONTRAT DE TRAVAIL DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MISSIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION EVALUATION DES  GESTIONS OT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION JURIDIQUE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TITRES ACTIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TITRES FONCIERS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TITRES OBLIGATIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ENGAGEMENT DE LIVRAISON IRREVOCABLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ENGAGEMENT DE PRELEVEMENT IRREVOCABLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CARTES GRISES DES EQUIPEMENTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONTRATS ET CONVENTIONS (NEGOCIATION FORMALISATION ET  GESTION DES RELATIONS CONTRACTUELLES ET CONVENTIONNELLES) DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PROTECTION LEGALES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONVENTIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONTRATS GENERAUX DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TITRES DIVERS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ASSURANCES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION GARANTIS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PRECONTENTIEUX ET CONTENTIEUX DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION RECOUVREMENT DE CREANCES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION REGLEMENTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TICKETS DE SUPPORTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PORTEFEUILLE DE LA PROPRIETE INTELLECTUELLE MCNP GIE ESMC PC DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PORTEFEUILLE DES SURETES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION VEILLE JURIDIQUE ET REGLEMENTAIRE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION INTEGRATION DE LA PLATEFORME GIE ESMC DANS L’ENVIRONNEMENT ECONOMICO-SOCIAL NATIONAL COMMUNAUTAIRE ET INTERNATIONAL DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DOCUMENTATION JURIDIQUE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ASSISTANCE ET DES CONCOURS DIVERS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ALERTES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION RECLAMATIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION RECOUVREMENTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PLANIFICATION  GESTIONS DES PROJETS SUIVI ET EVALUATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CADRAGE PROJETS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION INITIALISATION PROJETS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PLANIFICATION PROJETS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION REALISATION PROJETS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CLOTURE PROJETS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE TOUS PROJETS DIVISION DETENTRICE,",
+                    "APL R&D CONSEIL GESTION DEFINITION DES TACHES TOUS PROJETS DIVISION DETENTRICE,",
+                    "APL R&D CONSEIL GESTION DEFINITION DES RESSOURCES TOUS PROJET DIVISION DETENTRICE,",
+                    "APL R&D CONSEIL GESTION PLANIFICATION DES TACHES TOUS PROJET DIVISION DETENTRICE,",
+                    "APL R&D CONSEIL GESTION AFFECTATION DES TACHES TOUS PROJETS DIVISION DETENTRICE,",
+                    "APL R&D CONSEIL GESTION VALIDATION DE PROJETS DIVISION DETENTRICE,",
+                    "APL R&D CONSEIL GESTION AFFECTATION DES RESSOURCES TOUS PROJETS DIVISION DETENTRICE,",
+                    "APL R&D CONSEIL GESTION SUIVI DES EXECUTIONS DES TACHES TOUS PROJET DIVISION DETENTRICE,",
+                    "APL R&D CONSEIL GESTION EVALUATION DES EXECUTIONS TOUS PROJET DIVISION DETENTRICE,",
+                    "APL R&D CONSEIL GESTION DOCUMENTATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION FICHIER AUDIO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION FICHIER AUDIO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION FICHIER AUDIO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER AUDIO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION FICHIER AUDIO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION FICHIER VIDEO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION FICHIER VIDEO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION FICHIER VIDEO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER VIDEO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION FICHIER VIDEO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION POLES TIC DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION RECHERCHE ET DEVELOPPEMENT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SYSTEME ET RESEAUX DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONNECTIVITE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PERIPHERIQUES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FORMATION ET APPRENTISSAGE PROGICIEL MCNP DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MARKETING ET COMMUNICATION PROGICIEL MCNP DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT D’ANALYSE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT MANUEL DE L’UTILISATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA R&D DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA R&D APPLICATIONS MCNP DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ANALYSE DES SYSTEMES D’INFORMATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DEVELOPPEMENT ORIENTE COMPOSANTS ORIENTE SERVICE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PRATIQUES DE PLATEFORME DE DEPLOIEMENT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION BASE DE DONNEES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SECURITE LOGICIEL DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION INTERFACES ET CONCEPTION GRAPHIQUE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION LOGISTIQUES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE CENTRES HEBERGEMENT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE D’ALIMENTATION ENERGIE REDONDANTE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE MATERIELS INFORMATIQUES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE SYSTEMES INFORMATIQUE LOGICIELS APPLICATIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE BASES DE DONNEES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE RESEAUX INFORMATIQUES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONNECTIVITE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DES TELECOMMUNICATIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PERIPHERIQUES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DES KIT ET PERIPHERIQUES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FORMATION ET APPRENTISSAGE NUMERIQUES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT MANUEL DE DEPLOIEMENT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION COMMUNICATION PLATEFORME GIE ESMC DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MARKETING PLATEFORME GIE ESMC DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION INFOGRAPHIE PLATEFORME GIE ESMC DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION EVENEMENTIELS PLATEFORME GIE ESMC DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MULTIMEDIA PLATEFORME GIE ESMC DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION WEB TV DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION WEB RADIO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION BLOG DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION RESEAU SOCIAUX PLATEFORME GIE ESMC DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FACEBOOK DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TWITTER DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION INSTAGRAM DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION YOUTUBE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION WHATSAPP DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TIK-TOK DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TELEGRAM DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION LINKED IN DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION VIBER DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MESSENGER DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION IMMO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION VOLET MOBILISATION DES ASPECTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION COMMUNICATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MARKETING DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MULTIMEDIA DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION EVENEMENTIEL DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION RELATIONS PUBLIQUES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION VOLET DEPLOIEMENT DES ASPECTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MISE EN PLACE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION OPERATIONNALITE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION VOLET EXPLOITATION DES ASPECTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MISE EN ŒUVRE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MAINTIEN PERPETUEL DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FRANCHISES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION FILIERE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION BUDGET DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ELABORATION ET APPROBATION DES PLANS D’ACTIONS ET BUDGETS ANNUELS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONTROLE DES ENGAGEMENTS ET SUIVI BUDGETAIRE/ANALYTIQUE SOUS LE LOGICIEL DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MOBILISATION DE RESSOURCES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION APPROVISIONNEMENT INITIAL DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION REAPPROVISIONNEMENT DES COMPTES DAT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PAIEMENT DES OPI COUVERTS PAR DES LIGNES DE CREDITS DOCUMENTAIRES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION JUSTIFICATION DES MONTANTS DE SOUSCRIPTION ET DES OPI EMIS AUX FOURNISSEURS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TRESORERIE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DES COMPTES BANCAIRES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DE LA CAISSE DE MENUES DEPENSES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION REGLEMENT DES FACTURES PAR CAISSE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION AVANCES DE FONDS A JUSTIFIER DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION COMPTABILITE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ORGANISATION ET SYSTEMES COMPTABLES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION GUIDE D’IMPUTATION COMPTABLE : SCHEMAS DES PRINCIPALES ECRITURES COMPTABLES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PLANIFICATION DES TRAVAUX COMPTABLES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ANALYSE ET AUTOCONTROLE DES COMPTES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONTROLE ET AUDIT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONTROLE INTERNE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONTROLE EXTERNE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION PROTECTION (ASSURANCES ET GARANTIES) DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION ACNEV DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CENTRALES D’ACHAT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CENTRALES D’ACHAT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ENTREPOTS D’ACHAT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MARCHES D’ACHAT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MAGASINS D’ACHAT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION BOUTIQUES D’ACHAT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION GUICHETS UNIQUES D’ACHAT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE PRODUCTION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE PRODUCTION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ENTREPOTS DE PRODUCTION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MARCHES DE PRODUCTION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MAGASINS DE PRODUCTION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION BOUTIQUES DE PRODUCTION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION GUICHETS UNIQUES DE PRODUCTION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE TRANSFORMATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE TRANSFORMATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ENTREPOTS DE TRANSFORMATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MARCHES DE TRANSFORMATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MAGASINS DE TRANSFORMATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION BOUTIQUES DE TRANSFORMATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION GUICHETS UNIQUES DE TRANSFORMATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE VENTE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE VENTE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ENTREPOTS DE VENTE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MARCHES DE VENTE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION MAGASINS DE VENTE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION BOUTIQUES DE VENTE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION GUICHETS UNIQUES DE VENTE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION OPERATIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION EXPRESSIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD EXPRESSIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU EXPRESSIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM EXPRESSIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION REGLEMENTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD REGLEMENTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU REGLEMENTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM REGLEMENTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD EXPRESSIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD EXPRESSIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD EXPRESSIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD EXPRESSIONS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD REGLEMENTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD REGLEMENTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD REGLEMENTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD REGLEMENTS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION SERVICES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM DIVISION DETENTRICE :",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM ALERTE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM RECLAMATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM TRAÇABILITE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM RECOUVREMENT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM  GESTION AMIABLE CONTENTIEUX DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM REGLEMENT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER ZONES MONETAIRES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER PAYS DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER REGIONS OU EQUIVALENT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER PREFECTURES OU EQUIVALENT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER COMMUNES OU EQUIVALENT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER CANTONS OU EQUIVALENT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM OKSU OI MF 107 DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM OKSU OI MF 11000 DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM OKSU OI CMFH DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BCri PP OI DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BCri PM OI DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM NRPRE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM SOLVABILITE ABSOLUE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM MEVENTES ZERO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM COÏNCIDENCE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM ECHANGES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM DESENDETTEMENT DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM GASPILLAGE ZERO DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM RECYCLAGE OPTIMAL DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM PLEIN USAGE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM ASSURANCES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM FRAIS DE PRESTATION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM KIT TECHNOPOLE DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION TECHNOPOLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ACHATS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PASSATION DE CONTRAT DE FOURNISSEURS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SUIVI DES CONTRATS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SUIVI DES DELAIS DE LIVRAISON DES COMMANDES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ACHAT DE BPS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION RECEPTION D’UNE LIVRAISON DE BPS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TRAITEMENT D’UNE FACTURE FOURNISSEUR DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION STOCKS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DES STOCKS BPS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DES BPS DE TOUTE NATURE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DE CARBURANT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION IMMOBILISATIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PRINCIPES GENERAUX DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DES ENTREES DES IMMOBILISATIONS ET DU MATERIEL ROULANT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DES SORTIES DES IMMOBILISATIONS ET DU MATERIEL ROULANT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ENTRETIEN ET REPARATION DES IMMOBILISATIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SECURISATION DES IMMOBILISATIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DES VEHICULES ET DES MOTOS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DES OT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION RECRUTEMENT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TENUE DU DOSSIER DES  GESTIONS OT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FRAIS DE PRESTATIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONGES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION AUTRES AUTORISATIONS D’ABSENCES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION RUPTURE DU CONTRAT DE TRAVAIL DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MISSIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION EVALUATION DES GESTIONS OT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION JURIDIQUE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TITRES ACTIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TITRES FONCIERS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TITRES OBLIGATIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ENGAGEMENT DE LIVRAISON IRREVOCABLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ENGAGEMENT DE PRELEVEMENT IRREVOCABLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CARTES GRISES DES EQUIPEMENTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONTRATS ET CONVENTIONS (NEGOCIATION FORMALISATION ET  GESTION DES RELATIONS CONTRACTUELLES ET CONVENTIONNELLES) DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PROTECTION LEGALES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONVENTIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONTRATS GENERAUX DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TITRES DIVERS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ASSURANCES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION GARANTIS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PRECONTENTIEUX ET CONTENTIEUX DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION RECOUVREMENT DE CREANCES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION REGLEMENTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TICKETS DE SUPPORTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PORTEFEUILLE DE LA PROPRIETE INTELLECTUELLE MCNP GIE ESMC PC DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PORTEFEUILLE DES SURETES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION VEILLE JURIDIQUE ET REGLEMENTAIRE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION INTEGRATION DE LA PLATEFORME GIE ESMC DANS L’ENVIRONNEMENT ECONOMICO-SOCIAL NATIONAL COMMUNAUTAIRE ET INTERNATIONAL DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DOCUMENTATION JURIDIQUE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ASSISTANCE ET DES CONCOURS DIVERS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ALERTES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION RECLAMATIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION RECOUVREMENTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PLANIFICATION  GESTIONS DES PROJETS SUIVI ET EVALUATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CADRAGE PROJETS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION INITIALISATION PROJETS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PLANIFICATION PROJETS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION REALISATION PROJETS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CLOTURE PROJETS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE TOUS PROJETS DIVISION SURVEILLANCE,",
+                    "APL R&D CONSEIL GESTION DEFINITION DES TACHES TOUS PROJETS DIVISION SURVEILLANCE,",
+                    "APL R&D CONSEIL GESTION DEFINITION DES RESSOURCES TOUS PROJET DIVISION SURVEILLANCE,",
+                    "APL R&D CONSEIL GESTION PLANIFICATION DES TACHES TOUS PROJET DIVISION SURVEILLANCE,",
+                    "APL R&D CONSEIL GESTION AFFECTATION DES TACHES TOUS PROJETS DIVISION SURVEILLANCE,",
+                    "APL R&D CONSEIL GESTION VALIDATION DE PROJETS DIVISION SURVEILLANCE,",
+                    "APL R&D CONSEIL GESTION AFFECTATION DES RESSOURCES TOUS PROJETS DIVISION SURVEILLANCE,",
+                    "APL R&D CONSEIL GESTION SUIVI DES EXECUTIONS DES TACHES TOUS PROJET DIVISION SURVEILLANCE,",
+                    "APL R&D CONSEIL GESTION EVALUATION DES EXECUTIONS TOUS PROJET DIVISION SURVEILLANCE,",
+                    "APL R&D CONSEIL GESTION DOCUMENTATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION FICHIER AUDIO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION FICHIER AUDIO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION FICHIER AUDIO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER AUDIO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION FICHIER AUDIO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION FICHIER VIDEO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION FICHIER VIDEO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION FICHIER VIDEO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER VIDEO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION FICHIER VIDEO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION POLES TIC DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION RECHERCHE ET DEVELOPPEMENT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SYSTEME ET RESEAUX DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONNECTIVITE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PERIPHERIQUES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FORMATION ET APPRENTISSAGE PROGICIEL MCNP DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MARKETING ET COMMUNICATION PROGICIEL MCNP DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT D’ANALYSE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT MANUEL DE L’UTILISATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA R&D DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA R&D APPLICATIONS MCNP DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ANALYSE DES SYSTEMES D’INFORMATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DEVELOPPEMENT ORIENTE COMPOSANTS ORIENTE SERVICE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PRATIQUES DE PLATEFORME DE DEPLOIEMENT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION BASE DE DONNEES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SECURITE LOGICIEL DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION INTERFACES ET CONCEPTION GRAPHIQUE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION LOGISTIQUES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE CENTRES HEBERGEMENT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE D’ALIMENTATION ENERGIE REDONDANTE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE MATERIELS INFORMATIQUES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE SYSTEMES INFORMATIQUE LOGICIELS APPLICATIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE BASES DE DONNEES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE RESEAUX INFORMATIQUES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONNECTIVITE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DES TELECOMMUNICATIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PERIPHERIQUES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DES KIT ET PERIPHERIQUES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FORMATION ET APPRENTISSAGE NUMERIQUES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT MANUEL DE DEPLOIEMENT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION COMMUNICATION PLATEFORME GIE ESMC DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MARKETING PLATEFORME GIE ESMC DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION INFOGRAPHIE PLATEFORME GIE ESMC DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION EVENEMENTIELS PLATEFORME GIE ESMC DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MULTIMEDIA PLATEFORME GIE ESMC DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION WEB TV DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION WEB RADIO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION BLOG DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION RESEAU SOCIAUX PLATEFORME GIE ESMC DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FACEBOOK DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TWITTER DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION INSTAGRAM DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION YOUTUBE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION WHATSAPP DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TIK-TOK DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TELEGRAM DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION LINKED IN DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION VIBER DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MESSENGER DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION IMMO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION VOLET MOBILISATION DES ASPECTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION COMMUNICATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MARKETING DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MULTIMEDIA DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION EVENEMENTIEL DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION RELATIONS PUBLIQUES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION VOLET DEPLOIEMENT DES ASPECTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MISE EN PLACE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION OPERATIONNALITE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION VOLET EXPLOITATION DES ASPECTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MISE EN ŒUVRE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MAINTIEN PERPETUEL DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FRANCHISES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION FILIERE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION BUDGET DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ELABORATION ET APPROBATION DES PLANS D’ACTIONS ET BUDGETS ANNUELS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONTROLE DES ENGAGEMENTS ET SUIVI BUDGETAIRE/ANALYTIQUE SOUS LE LOGICIEL DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MOBILISATION DE RESSOURCES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION APPROVISIONNEMENT INITIAL DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION REAPPROVISIONNEMENT DES COMPTES DAT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PAIEMENT DES OPI COUVERTS PAR DES LIGNES DE CREDITS DOCUMENTAIRES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION JUSTIFICATION DES MONTANTS DE SOUSCRIPTION ET DES OPI EMIS AUX FOURNISSEURS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TRESORERIE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DES COMPTES BANCAIRES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DE LA CAISSE DE MENUES DEPENSES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION REGLEMENT DES FACTURES PAR CAISSE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION AVANCES DE FONDS A JUSTIFIER DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION COMPTABILITE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ORGANISATION ET SYSTEMES COMPTABLES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION GUIDE D’IMPUTATION COMPTABLE : SCHEMAS DES PRINCIPALES ECRITURES COMPTABLES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PLANIFICATION DES TRAVAUX COMPTABLES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ANALYSE ET AUTOCONTROLE DES COMPTES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONTROLE ET AUDIT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONTROLE INTERNE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONTROLE EXTERNE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION PROTECTION (ASSURANCES ET GARANTIES) DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION ACNEV DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CENTRALES D’ACHAT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CENTRALES D’ACHAT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ENTREPOTS D’ACHAT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MARCHES D’ACHAT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MAGASINS D’ACHAT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION BOUTIQUES D’ACHAT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION GUICHETS UNIQUES D’ACHAT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE PRODUCTION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE PRODUCTION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ENTREPOTS DE PRODUCTION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MARCHES DE PRODUCTION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MAGASINS DE PRODUCTION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION BOUTIQUES DE PRODUCTION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION GUICHETS UNIQUES DE PRODUCTION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ENTREPOTS DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MARCHES DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MAGASINS DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION BOUTIQUES DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION GUICHETS UNIQUES DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE VENTE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE VENTE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ENTREPOTS DE VENTE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MARCHES DE VENTE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION MAGASINS DE VENTE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION BOUTIQUES DE VENTE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION GUICHETS UNIQUES DE VENTE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION OPERATIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION EXPRESSIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD EXPRESSIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU EXPRESSIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM EXPRESSIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION REGLEMENTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD REGLEMENTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU REGLEMENTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM REGLEMENTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD EXPRESSIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD EXPRESSIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD EXPRESSIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD EXPRESSIONS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD REGLEMENTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD REGLEMENTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD REGLEMENTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD REGLEMENTS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION SERVICES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM DIVISION SURVEILLANCE :",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM ALERTE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM RECLAMATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM TRAÇABILITE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM RECOUVREMENT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM  GESTION AMIABLE CONTENTIEUX DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM REGLEMENT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER ZONES MONETAIRES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER PAYS DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER REGIONS OU EQUIVALENT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER PREFECTURES OU EQUIVALENT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER COMMUNES OU EQUIVALENT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER CANTONS OU EQUIVALENT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM OKSU OI MF 107 DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM OKSU OI MF 11000 DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM OKSU OI CMFH DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BCri PP OI DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BCri PM OI DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM NRPRE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM SOLVABILITE ABSOLUE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM MEVENTES ZERO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM COÏNCIDENCE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM ECHANGES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM DESENDETTEMENT DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM GASPILLAGE ZERO DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM RECYCLAGE OPTIMAL DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM PLEIN USAGE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM ASSURANCES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM FRAIS DE PRESTATION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM KIT TECHNOPOLE DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION TECHNOPOLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ACHATS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PASSATION DE CONTRAT DE FOURNISSEURS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SUIVI DES CONTRATS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SUIVI DES DELAIS DE LIVRAISON DES COMMANDES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ACHAT DE BPS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION RECEPTION D’UNE LIVRAISON DE BPS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TRAITEMENT D’UNE FACTURE FOURNISSEUR DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION STOCKS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DES STOCKS BPS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DES BPS DE TOUTE NATURE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DE CARBURANT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION IMMOBILISATIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PRINCIPES GENERAUX DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DES ENTREES DES IMMOBILISATIONS ET DU MATERIEL ROULANT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DES SORTIES DES IMMOBILISATIONS ET DU MATERIEL ROULANT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ENTRETIEN ET REPARATION DES IMMOBILISATIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SECURISATION DES IMMOBILISATIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DES VEHICULES ET DES MOTOS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DES OT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION RECRUTEMENT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TENUE DU DOSSIER DES  GESTIONS OT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FRAIS DE PRESTATIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONGES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION AUTRES AUTORISATIONS D’ABSENCES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION RUPTURE DU CONTRAT DE TRAVAIL DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MISSIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION EVALUATION DES  GESTIONS OT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION JURIDIQUE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TITRES ACTIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TITRES FONCIERS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TITRES OBLIGATIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ENGAGEMENT DE LIVRAISON IRREVOCABLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ENGAGEMENT DE PRELEVEMENT IRREVOCABLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CARTES GRISES DES EQUIPEMENTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONTRATS ET CONVENTIONS (NEGOCIATION FORMALISATION ET  GESTION DES RELATIONS CONTRACTUELLES ET CONVENTIONNELLES) DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PROTECTION LEGALES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONVENTIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONTRATS GENERAUX DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TITRES DIVERS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ASSURANCES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION GARANTIS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PRECONTENTIEUX ET CONTENTIEUX DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION RECOUVREMENT DE CREANCES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION REGLEMENTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TICKETS DE SUPPORTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PORTEFEUILLE DE LA PROPRIETE INTELLECTUELLE MCNP GIE ESMC PC DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PORTEFEUILLE DES SURETES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION VEILLE JURIDIQUE ET REGLEMENTAIRE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION INTEGRATION DE LA PLATEFORME GIE ESMC DANS L’ENVIRONNEMENT ECONOMICO-SOCIALNATIONAL COMMUNAUTAIRE ET INTERNATIONAL DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DOCUMENTATION JURIDIQUE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ASSISTANCE ET DES CONCOURS DIVERS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ALERTES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION RECLAMATIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION RECOUVREMENTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PLANIFICATION  GESTIONS DES PROJETS SUIVI ET EVALUATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CADRAGE PROJETS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION INITIALISATION PROJETS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PLANIFICATION PROJETS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION REALISATION PROJETS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CLOTURE PROJETS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE TOUS PROJETS DIVISION EXECUTANTE,",
+                    "APL R&D CONSEIL GESTION DEFINITION DES TACHES TOUS PROJETS DIVISION EXECUTANTE,",
+                    "APL R&D CONSEIL GESTION DEFINITION DES RESSOURCES TOUS PROJET DIVISION EXECUTANTE,",
+                    "APL R&D CONSEIL GESTION PLANIFICATION DES TACHES TOUS PROJET DIVISION EXECUTANTE,",
+                    "APL R&D CONSEIL GESTION AFFECTATION DES TACHES TOUS PROJETS DIVISION EXECUTANTE,",
+                    "APL R&D CONSEIL GESTION VALIDATION DE PROJETS DIVISION EXECUTANTE,",
+                    "APL R&D CONSEIL GESTION AFFECTATION DES RESSOURCES TOUS PROJETS DIVISION EXECUTANTE,",
+                    "APL R&D CONSEIL GESTION SUIVI DES EXECUTIONS DES TACHES TOUS PROJET DIVISION EXECUTANTE,",
+                    "APL R&D CONSEIL GESTION EVALUATION DES EXECUTIONS TOUS PROJET DIVISION EXECUTANTE,",
+                    "APL R&D CONSEIL GESTION DOCUMENTATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION FICHIER AUDIO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION FICHIER AUDIO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION FICHIER AUDIO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER AUDIO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION FICHIER AUDIO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION FICHIER VIDEO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION FICHIER VIDEO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION FICHIER VIDEO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER VIDEO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION FICHIER VIDEO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION EDITION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION POLES TIC DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION RECHERCHE ET DEVELOPPEMENT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SYSTEME ET RESEAUX DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONNECTIVITE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PERIPHERIQUES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FORMATION ET APPRENTISSAGE PROGICIEL MCNP DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MARKETING ET COMMUNICATION PROGICIEL MCNP DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT D’ANALYSE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT MANUEL DE L’UTILISATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA R&D DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA R&D APPLICATIONS MCNP DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ANALYSE DES SYSTEMES D’INFORMATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DEVELOPPEMENT ORIENTE COMPOSANTS ORIENTE SERVICE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PRATIQUES DE PLATEFORME DE DEPLOIEMENT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION BASE DE DONNEES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SECURITE LOGICIEL DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION INTERFACES ET CONCEPTION GRAPHIQUE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION LOGISTIQUES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE CENTRES HEBERGEMENT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE D’ALIMENTATION ENERGIE REDONDANTE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE MATERIELS INFORMATIQUES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE SYSTEMES INFORMATIQUE LOGICIELS APPLICATIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE BASES DE DONNEES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE RESEAUX INFORMATIQUES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONNECTIVITE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DES TELECOMMUNICATIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PERIPHERIQUES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DES KIT ET PERIPHERIQUES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FORMATION ET APPRENTISSAGE NUMERIQUES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT MANUEL DE DEPLOIEMENT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION COMMUNICATION PLATEFORME GIE ESMC DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MARKETING PLATEFORME GIE ESMC DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION INFOGRAPHIE PLATEFORME GIE ESMC DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION EVENEMENTIELS PLATEFORME GIE ESMC DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MULTIMEDIA PLATEFORME GIE ESMC DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION WEB TV DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION WEB RADIO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION BLOG DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION RESEAU SOCIAUX PLATEFORME GIE ESMC DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FACEBOOK DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TWITTER DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION INSTAGRAM DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION YOUTUBE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION WHATSAPP DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TIK-TOK DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TELEGRAM DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION LINKED IN DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION VIBER DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MESSENGER DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION IMMO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION VOLET MOBILISATION DES ASPECTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION COMMUNICATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MARKETING DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MULTIMEDIA DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION EVENEMENTIEL DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION RELATIONS PUBLIQUES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION VOLET DEPLOIEMENT DES ASPECTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MISE EN PLACE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION OPERATIONNALITE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION VOLET EXPLOITATION DES ASPECTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MISE EN ŒUVRE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MAINTIEN PERPETUEL DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FRANCHISES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION FILIERE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION BUDGET DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ELABORATION ET APPROBATION DES PLANS D’ACTIONS ET BUDGETS ANNUELS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONTROLE DES ENGAGEMENTS ET SUIVI BUDGETAIRE/ANALYTIQUE SOUS LE LOGICIEL DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MOBILISATION DE RESSOURCES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION APPROVISIONNEMENT INITIAL DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION REAPPROVISIONNEMENT DES COMPTES DAT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PAIEMENT DES OPI COUVERTS PAR DES LIGNES DE CREDITS DOCUMENTAIRES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION JUSTIFICATION DES MONTANTS DE SOUSCRIPTION ET DES OPI EMIS AUX FOURNISSEURS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TRESORERIE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DES COMPTES BANCAIRES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DE LA CAISSE DE MENUES DEPENSES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION REGLEMENT DES FACTURES PAR CAISSE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION AVANCES DE FONDS A JUSTIFIER DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION COMPTABILITE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ORGANISATION ET SYSTEMES COMPTABLES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION GUIDE D’IMPUTATION COMPTABLE : SCHEMAS DES PRINCIPALES ECRITURES COMPTABLES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PLANIFICATION DES TRAVAUX COMPTABLES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ANALYSE ET AUTOCONTROLE DES COMPTES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONTROLE ET AUDIT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONTROLE INTERNE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONTROLE EXTERNE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION PROTECTION (ASSURANCES ET GARANTIES) DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION ACNEV DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CENTRALES D’ACHAT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CENTRALES D’ACHAT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ENTREPOTS D’ACHAT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MARCHES D’ACHAT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MAGASINS D’ACHAT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION BOUTIQUES D’ACHAT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION GUICHETS UNIQUES D’ACHAT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE PRODUCTION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE PRODUCTION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ENTREPOTS DE PRODUCTION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MARCHES DE PRODUCTION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MAGASINS DE PRODUCTION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION BOUTIQUES DE PRODUCTION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION GUICHETS UNIQUES DE PRODUCTION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ENTREPOTS DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MARCHES DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MAGASINS DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION BOUTIQUES DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION GUICHETS UNIQUES DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE VENTE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CENTRALES DE VENTE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ENTREPOTS DE VENTE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MARCHES DE VENTE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION MAGASINS DE VENTE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION BOUTIQUES DE VENTE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION GUICHETS UNIQUES DE VENTE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION OPERATIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION EXPRESSIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD EXPRESSIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU EXPRESSIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM EXPRESSIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION REGLEMENTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD REGLEMENTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU REGLEMENTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM REGLEMENTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD EXPRESSIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD EXPRESSIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD EXPRESSIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD EXPRESSIONS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD REGLEMENTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD REGLEMENTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD REGLEMENTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD REGLEMENTS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION FICHE ODD TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION KSU TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SM TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION TETE DE DIVISION SERVICES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM ALERTE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM RECLAMATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM TRAÇABILITE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM RECOUVREMENT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM  GESTION AMIABLE CONTENTIEUX DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM REGLEMENT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER ZONES MONETAIRES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER PAYS DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER REGIONS OU EQUIVALENT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER PREFECTURES OU EQUIVALENT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER COMMUNES OU EQUIVALENT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BALANCE INTER CANTONS OU EQUIVALENT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM OKSU OI MF 107 DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM OKSU OI MF 11000 DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM OKSU OI CMFH DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BCri PP OI DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM BCri PM OI DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM NRPRE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM SOLVABILITE ABSOLUE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM MEVENTES ZERO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM COÏNCIDENCE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM ECHANGES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM DESENDETTEMENT DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM GASPILLAGE ZERO DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM RECYCLAGE OPTIMAL DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM PLEIN USAGE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM ASSURANCES DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM FRAIS DE PRESTATION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION SERVICES SMCIPN INTERIM KIT TECHNOPOLE DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION COMITE DES PIONNIERS",
+                    "APL R&D CONSEIL GESTION PIONNIER GENERAL ADJOINT",
+                    "APL R&D CONSEIL GESTION RPPE PC",
+                    "APL R&D CONSEIL GESTION SRPPTEE PC",
+                    "APL R&D CONSEIL GESTION SRPPTNE PC",
+                    "APL R&D CONSEIL GESTION SRPPTPLE PC",
+                    "APL R&D CONSEIL GESTION SRPPTARE PC",
+                    "APL R&D CONSEIL GESTION SRPPTSE PC",
+                    "APL R&D CONSEIL GESTION SRPPTCHE PC",
+                    "APL R&D CONSEIL GESTION SRPPTME PC",
+                    "APL R&D CONSEIL GESTION SRPPTHE PC",
+                    "APL R&D CONSEIL GESTION SRPPTCOE PC",
+                    "APL R&D CONSEIL GESTION SRPPTAE PC",
+                    "APL R&D CONSEIL GESTION SRPPTMAE PC",
+                    "APL R&D CONSEIL GESTION SRPPTENE PC",
+                    "APL R&D CONSEIL GESTION SRPPTCE PC",
+                    "APL R&D CONSEIL GESTION SRPPTEXE PC",
+                    "APL R&D CONSEIL GESTION SRPPTIE PC",
+                    "APL R&D CONSEIL GESTION SRPPOBPSDE PC",
+                    "APL R&D CONSEIL GESTION SRPPOBPSE PC",
+                    "APL R&D CONSEIL GESTION SRPPOPE PC",
+                    "APL R&D CONSEIL GESTION SRPPOTE PC",
+                    "APL R&D CONSEIL GESTION SRPPOKSUE PC",
+                    "APL R&D CONSEIL GESTION SRPPOIE PC",
+                    "APL R&D CONSEIL GESTION SRPPOME PC",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 17",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 1",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 2",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 3",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 4",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 5",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 6",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 7",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 8",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 9",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 10",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 11",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 12",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 13",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 14",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 15",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 16",
+                    "APL R&D CONSEIL GESTION ROSCE PC ODD 17",
+                    "APL R&D CONSEIL GESTION CONTROLE DE  GESTION",
+                    "APL R&D CONSEIL GESTION CONTROLE DE  GESTION DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONTROLE DE  GESTION DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONTROLE DE  GESTION DIVISION EXECUTANTE",
+                    "APL R&D CONSEIL GESTION CONTROLE DES COMPTES",
+                    "APL R&D CONSEIL GESTION CONTROLE DES COMPTES DIVISION DETENTRICE",
+                    "APL R&D CONSEIL GESTION CONTROLE DES COMPTES DIVISION SURVEILLANCE",
+                    "APL R&D CONSEIL GESTION CONTROLE DES COMPTES DIVISION EXECUTANTE",
+            };
+            for(String libelle : listChaineValue) {
+                FillChaineValeur fillChaineValeur = new FillChaineValeur();
+                fillChaineValeur.setCode(libelle);
+                fillChaineValeur.setLibelle(libelle);
+                fillChaineValeur.setDescription(libelle);
+
+                fillChaineValeur.setIdInstitution(institution.getId());
+                FillChaineValeur fillChaineValeur1 = this.fillChaineValeurInterface.create(fillChaineValeur);
+
+
+                String [] listSistributiooon = {"d'achat","de production","de production",  "de transformation",  "de vente"};
+
+                for(String lib : listSistributiooon) {
+                    String libeller = fillChaineValeur.getLibelle() + " chaine de distribution "+lib;
+                    FillChaineDistribution fillChaineDistributor = new FillChaineDistribution();
+                    fillChaineDistributor.setCode(lib);
+                    fillChaineDistributor.setLibelle(libeller);
+                    fillChaineDistributor.setDescription(libeller);
+                    fillChaineDistributor.setIdChaineValeur(fillChaineValeur1.getId());
+                    this.fillChaineDistributionInterface.create(fillChaineDistributor);
+
+                }
+
+            }
+        }
+    }
+
+
+    @Override
+    public void initPlugFlboeFill() {
+        List<FlbOeChambre> flbOeChambres = this.flbOeChambreInterface.getAll() ;
+        for(FlbOeChambre flbOeChambre : flbOeChambres){
+            String [] listChaineValue = {
+
+
+                    "GESTION GENERAL",
+                    "GESTION SECRETARIAT PARTICULIER GESTION GENERAL",
+                    "GESTION COURRIERS",
+                    "GESTION SECRETARIAT GENERAL GESTION GENERAL",
+                    "GESTION STANDARD",
+                    "GESTION COURSIER",
+                    "GESTION SERVICES GENERAUX",
+                    "GESTION SECURITE",
+                    "GESTION PARC AUTO",
+                    "GESTION CHAUFFEUR",
+                    "GESTION CONSEIL DE SURVEILLANCE SPECIALISEE",
+                    "GESTION REGLEMENTATION",
+                    "GESTION SUPERVISION",
+                    "GESTION PROTECTION",
+                    "GESTION CONSEIL DE SURVEILLANCE SPECIALISEE DIVISION DETENTRICE",
+                    "GESTION REGLEMENTATION DIVISION DETENTRICE",
+                    "GESTION SUPERVISION DIVISION DETENTRICE",
+                    "GESTION PROTECTION DIVISION DETENTRICE",
+                    "GESTION CONSEIL DE SURVEILLANCE SPECIALISEE DIVISION SURVEILLANCE",
+                    "GESTION REGLEMENTATION DIVISION SURVEILLANCE",
+                    "GESTION SUPERVISION DIVISION SURVEILLANCE",
+                    "GESTION PROTECTION DIVISION SURVEILLANCE",
+                    "GESTION CONSEIL DE SURVEILLANCE SPECIALISEE DIVISION EXECUTANTE",
+                    "GESTION REGLEMENTATION DIVISION EXECUTANTE",
+                    "GESTION SUPERVISION DIVISION EXECUTANTE",
+                    "GESTION PROTECTION DIVISION EXECUTANTE",
+                    "GESTION CONSEIL DE DIVISIONS",
+                    "GESTION SECRETARIAT GENERAL CONSEIL DE DIVISIONS",
+                    "GESTION SECRETARIAT GENERAL STANDARD",
+                    "GESTION SECRETARIAT GENERAL COURSIER",
+                    "GESTION SECRETARIAT GENERAL SERVICES GENERAUX",
+                    "GESTION SECRETARIAT GENERAL SECURITE",
+                    "GESTION SECRETARIAT GENERAL PARC AUTO",
+                    "GESTION DIVISION DETENTRICE",
+                    "GESTION TETE DE DIVISION TECHNOPOLE DIVISION DETENTRICE",
+                    "GESTION ACHATS DIVISION DETENTRICE",
+                    "GESTION PASSATION DE CONTRAT DE FOURNISSEURS DIVISION DETENTRICE",
+                    "GESTION SUIVI DES CONTRATS DIVISION DETENTRICE",
+                    "GESTION SUIVI DES DELAIS DE LIVRAISON DES COMMANDES DIVISION DETENTRICE",
+                    "GESTION ACHAT DE BPS DIVISION DETENTRICE",
+                    "GESTION RECEPTION D’UNE LIVRAISON DE BPS DIVISION DETENTRICE",
+                    "GESTION TRAITEMENT D’UNE FACTURE FOURNISSEUR DIVISION DETENTRICE",
+                    "GESTION STOCKS DIVISION DETENTRICE",
+                    "GESTION DES STOCKS BPS DIVISION DETENTRICE",
+                    "GESTION DES BPS DE TOUTE NATURE DIVISION DETENTRICE",
+                    "GESTION DE CARBURANT DIVISION DETENTRICE",
+                    "GESTION IMMOBILISATIONS DIVISION DETENTRICE",
+                    "GESTION PRINCIPES GENERAUX DIVISION DETENTRICE",
+                    "GESTION DES ENTREES DES IMMOBILISATIONS ET DU MATERIEL ROULANT DIVISION DETENTRICE",
+                    "GESTION DES SORTIES DES IMMOBILISATIONS ET DU MATERIEL ROULANT DIVISION DETENTRICE",
+                    "GESTION ENTRETIEN ET REPARATION DES IMMOBILISATIONS DIVISION DETENTRICE",
+                    "GESTION SECURISATION DES IMMOBILISATIONS DIVISION DETENTRICE",
+                    "GESTION DES VEHICULES ET DES MOTOS DIVISION DETENTRICE",
+                    "GESTION DES OT DIVISION DETENTRICE",
+                    "GESTION RECRUTEMENT DIVISION DETENTRICE",
+                    "GESTION TENUE DU DOSSIER DES GESTIONS OT DIVISION DETENTRICE",
+                    "GESTION FRAIS DE PRESTATIONS DIVISION DETENTRICE",
+                    "GESTION CONGES DIVISION DETENTRICE",
+                    "GESTION AUTRES AUTORISATIONS D’ABSENCES DIVISION DETENTRICE",
+                    "GESTION RUPTURE DU CONTRAT DE TRAVAIL DIVISION DETENTRICE",
+                    "GESTION MISSIONS DIVISION DETENTRICE",
+                    "GESTION EVALUATION DES GESTIONS OT DIVISION DETENTRICE",
+                    "GESTION JURIDIQUE DIVISION DETENTRICE",
+                    "GESTION TITRES ACTIONS DIVISION DETENTRICE",
+                    "GESTION TITRES FONCIERS DIVISION DETENTRICE",
+                    "GESTION TITRES OBLIGATIONS DIVISION DETENTRICE",
+                    "GESTION ENGAGEMENT DE LIVRAISON IRREVOCABLE DIVISION DETENTRICE",
+                    "GESTION ENGAGEMENT DE PRELEVEMENT IRREVOCABLE DIVISION DETENTRICE",
+                    "GESTION CARTES GRISES DES EQUIPEMENTS DIVISION DETENTRICE",
+                    "GESTION CONTRATS ET CONVENTIONS (NEGOCIATION FORMALISATION ET GESTION DES RELATIONS CONTRACTUELLES ET CONVENTIONNELLES) DIVISION DETENTRICE",
+                    "GESTION PROTECTION LEGALES DIVISION DETENTRICE",
+                    "GESTION CONVENTIONS DIVISION DETENTRICE",
+                    "GESTION CONTRATS GENERAUX DIVISION DETENTRICE",
+                    "GESTION TITRES DIVERS DIVISION DETENTRICE",
+                    "GESTION ASSURANCES DIVISION DETENTRICE",
+                    "GESTION GARANTIS DIVISION DETENTRICE",
+                    "GESTION PRECONTENTIEUX ET CONTENTIEUX DIVISION DETENTRICE",
+                    "GESTION RECOUVREMENT DE CREANCES DIVISION DETENTRICE",
+                    "GESTION REGLEMENTS DIVISION DETENTRICE",
+                    "GESTION TICKETS DE SUPPORTS DIVISION DETENTRICE",
+                    "GESTION PORTEFEUILLE DE LA PROPRIETE INTELLECTUELLE MCNP GIE ESMC PC DIVISION DETENTRICE",
+                    "GESTION PORTEFEUILLE DES SURETES DIVISION DETENTRICE",
+                    "GESTION VEILLE JURIDIQUE ET REGLEMENTAIRE DIVISION DETENTRICE",
+                    "GESTION INTEGRATION DE LA PLATEFORME GIE ESMC DANS L’ENVIRONNEMENT ECONOMICO-SOCIAL NATIONAL COMMUNAUTAIRE ET INTERNATIONAL DIVISION DETENTRICE",
+                    "GESTION DOCUMENTATION JURIDIQUE DIVISION DETENTRICE",
+                    "GESTION ASSISTANCE ET DES CONCOURS DIVERS DIVISION DETENTRICE",
+                    "GESTION ALERTES DIVISION DETENTRICE",
+                    "GESTION RECLAMATIONS DIVISION DETENTRICE",
+                    "GESTION RECOUVREMENTS DIVISION DETENTRICE",
+                    "GESTION PLANIFICATION GESTIONS DES PROJETS SUIVI ET EVALUATION DIVISION DETENTRICE",
+                    "GESTION CADRAGE PROJETS DIVISION DETENTRICE",
+                    "GESTION INITIALISATION PROJETS DIVISION DETENTRICE",
+                    "GESTION PLANIFICATION PROJETS DIVISION DETENTRICE",
+                    "GESTION REALISATION PROJETS DIVISION DETENTRICE",
+                    "GESTION CLOTURE PROJETS DIVISION DETENTRICE",
+                    "GESTION CONCEPTION DE TOUS PROJETS DIVISION DETENTRICE,",
+                    "GESTION DEFINITION DES TACHES TOUS PROJETS DIVISION DETENTRICE,",
+                    "GESTION DEFINITION DES RESSOURCES TOUS PROJET DIVISION DETENTRICE,",
+                    "GESTION PLANIFICATION DES TACHES TOUS PROJET DIVISION DETENTRICE,",
+                    "GESTION AFFECTATION DES TACHES TOUS PROJETS DIVISION DETENTRICE,",
+                    "GESTION VALIDATION DE PROJETS DIVISION DETENTRICE,",
+                    "GESTION AFFECTATION DES RESSOURCES TOUS PROJETS DIVISION DETENTRICE,",
+                    "GESTION SUIVI DES EXECUTIONS DES TACHES TOUS PROJET DIVISION DETENTRICE,",
+                    "GESTION EVALUATION DES EXECUTIONS TOUS PROJET DIVISION DETENTRICE,",
+                    "GESTION DOCUMENTATION DIVISION DETENTRICE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION DETENTRICE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION DETENTRICE",
+                    "GESTION EDITION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION DETENTRICE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION DETENTRICE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION DETENTRICE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION FICHIER AUDIO DIVISION DETENTRICE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION FICHIER AUDIO DIVISION DETENTRICE",
+                    "GESTION EDITION DE LA DOCUMENTATION FICHIER AUDIO DIVISION DETENTRICE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER AUDIO DIVISION DETENTRICE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION FICHIER AUDIO DIVISION DETENTRICE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION FICHIER VIDEO DIVISION DETENTRICE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION FICHIER VIDEO DIVISION DETENTRICE",
+                    "GESTION EDITION DE LA DOCUMENTATION FICHIER VIDEO DIVISION DETENTRICE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER VIDEO DIVISION DETENTRICE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION FICHIER VIDEO DIVISION DETENTRICE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION DETENTRICE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION DETENTRICE",
+                    "GESTION EDITION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION DETENTRICE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION DETENTRICE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION DETENTRICE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION DETENTRICE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION DETENTRICE",
+                    "GESTION EDITION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION DETENTRICE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION DETENTRICE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION DETENTRICE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION DETENTRICE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION DETENTRICE",
+                    "GESTION EDITION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION DETENTRICE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION DETENTRICE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION DETENTRICE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION DETENTRICE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION DETENTRICE",
+                    "GESTION EDITION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION DETENTRICE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION DETENTRICE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION DETENTRICE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION DETENTRICE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION DETENTRICE",
+                    "GESTION EDITION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION DETENTRICE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION DETENTRICE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION DETENTRICE",
+                    "GESTION POLES TIC DIVISION DETENTRICE",
+                    "GESTION RECHERCHE ET DEVELOPPEMENT DIVISION DETENTRICE",
+                    "GESTION SYSTEME ET RESEAUX DIVISION DETENTRICE",
+                    "GESTION CONNECTIVITE DIVISION DETENTRICE",
+                    "GESTION PERIPHERIQUES DIVISION DETENTRICE",
+                    "GESTION FORMATION ET APPRENTISSAGE PROGICIEL MCNP DIVISION DETENTRICE",
+                    "GESTION MARKETING ET COMMUNICATION PROGICIEL MCNP DIVISION DETENTRICE",
+                    "GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT D’ANALYSE DIVISION DETENTRICE",
+                    "GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT MANUEL DE L’UTILISATION DIVISION DETENTRICE",
+                    "GESTION TECHNIQUE DE LA R&D DIVISION DETENTRICE",
+                    "GESTION TECHNIQUE DE LA R&D APPLICATIONS MCNP DIVISION DETENTRICE",
+                    "GESTION ANALYSE DES SYSTEMES D’INFORMATION DIVISION DETENTRICE",
+                    "GESTION DEVELOPPEMENT ORIENTE COMPOSANTS ORIENTE SERVICE DIVISION DETENTRICE",
+                    "GESTION PRATIQUES DE PLATEFORME DE DEPLOIEMENT DIVISION DETENTRICE",
+                    "GESTION BASE DE DONNEES DIVISION DETENTRICE",
+                    "GESTION SECURITE LOGICIEL DIVISION DETENTRICE",
+                    "GESTION INTERFACES ET CONCEPTION GRAPHIQUE DIVISION DETENTRICE",
+                    "GESTION LOGISTIQUES DIVISION DETENTRICE",
+                    "GESTION TECHNIQUE DE CENTRES HEBERGEMENT DIVISION DETENTRICE",
+                    "GESTION TECHNIQUE D’ALIMENTATION ENERGIE REDONDANTE DIVISION DETENTRICE",
+                    "GESTION TECHNIQUE DE MATERIELS INFORMATIQUES DIVISION DETENTRICE",
+                    "GESTION TECHNIQUE DE SYSTEMES INFORMATIQUE LOGICIELS APPLICATIONS DIVISION DETENTRICE",
+                    "GESTION TECHNIQUE DE BASES DE DONNEES DIVISION DETENTRICE",
+                    "GESTION TECHNIQUE DE RESEAUX INFORMATIQUES DIVISION DETENTRICE",
+                    "GESTION CONNECTIVITE DIVISION DETENTRICE",
+                    "GESTION TECHNIQUE DES TELECOMMUNICATIONS DIVISION DETENTRICE",
+                    "GESTION PERIPHERIQUES DIVISION DETENTRICE",
+                    "GESTION TECHNIQUE DES KIT ET PERIPHERIQUES DIVISION DETENTRICE",
+                    "GESTION FORMATION ET APPRENTISSAGE NUMERIQUES DIVISION DETENTRICE",
+                    "GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT MANUEL DE DEPLOIEMENT DIVISION DETENTRICE",
+                    "GESTION COMMUNICATION PLATEFORME GIE ESMC DIVISION DETENTRICE",
+                    "GESTION MARKETING PLATEFORME GIE ESMC DIVISION DETENTRICE",
+                    "GESTION INFOGRAPHIE PLATEFORME GIE ESMC DIVISION DETENTRICE",
+                    "GESTION EVENEMENTIELS PLATEFORME GIE ESMC DIVISION DETENTRICE",
+                    "GESTION MULTIMEDIA PLATEFORME GIE ESMC DIVISION DETENTRICE",
+                    "GESTION WEB TV DIVISION DETENTRICE",
+                    "GESTION WEB RADIO DIVISION DETENTRICE",
+                    "GESTION BLOG DIVISION DETENTRICE",
+                    "GESTION RESEAU SOCIAUX PLATEFORME GIE ESMC DIVISION DETENTRICE",
+                    "GESTION FACEBOOK DIVISION DETENTRICE",
+                    "GESTION TWITTER DIVISION DETENTRICE",
+                    "GESTION INSTAGRAM DIVISION DETENTRICE",
+                    "GESTION YOUTUBE DIVISION DETENTRICE",
+                    "GESTION WHATSAPP DIVISION DETENTRICE",
+                    "GESTION TIK-TOK DIVISION DETENTRICE",
+                    "GESTION TELEGRAM DIVISION DETENTRICE",
+                    "GESTION LINKED IN DIVISION DETENTRICE",
+                    "GESTION VIBER DIVISION DETENTRICE",
+                    "GESTION MESSENGER DIVISION DETENTRICE",
+                    "GESTION IMMO DIVISION DETENTRICE",
+                    "GESTION VOLET MOBILISATION DES ASPECTS DIVISION DETENTRICE",
+                    "GESTION COMMUNICATION DIVISION DETENTRICE",
+                    "GESTION MARKETING DIVISION DETENTRICE",
+                    "GESTION MULTIMEDIA DIVISION DETENTRICE",
+                    "GESTION EVENEMENTIEL DIVISION DETENTRICE",
+                    "GESTION RELATIONS PUBLIQUES DIVISION DETENTRICE",
+                    "GESTION VOLET DEPLOIEMENT DES ASPECTS DIVISION DETENTRICE",
+                    "GESTION MISE EN PLACE DIVISION DETENTRICE",
+                    "GESTION OPERATIONNALITE DIVISION DETENTRICE",
+                    "GESTION VOLET EXPLOITATION DES ASPECTS DIVISION DETENTRICE",
+                    "GESTION MISE EN ŒUVRE DIVISION DETENTRICE",
+                    "GESTION MAINTIEN PERPETUEL DIVISION DETENTRICE",
+                    "GESTION FRANCHISES DIVISION DETENTRICE",
+                    "GESTION TETE DE DIVISION FILIERE DIVISION DETENTRICE",
+                    "GESTION BUDGET DIVISION DETENTRICE",
+                    "GESTION ELABORATION ET APPROBATION DES PLANS D’ACTIONS ET BUDGETS ANNUELS DIVISION DETENTRICE",
+                    "GESTION CONTROLE DES ENGAGEMENTS ET SUIVI BUDGETAIRE/ANALYTIQUE SOUS LE LOGICIEL DIVISION DETENTRICE",
+                    "GESTION MOBILISATION DE RESSOURCES DIVISION DETENTRICE",
+                    "GESTION APPROVISIONNEMENT INITIAL DIVISION DETENTRICE",
+                    "GESTION REAPPROVISIONNEMENT DES COMPTES DAT DIVISION DETENTRICE",
+                    "GESTION PAIEMENT DES OPI COUVERTS PAR DES LIGNES DE CREDITS DOCUMENTAIRES DIVISION DETENTRICE",
+                    "GESTION JUSTIFICATION DES MONTANTS DE SOUSCRIPTION ET DES OPI EMIS AUX FOURNISSEURS DIVISION DETENTRICE",
+                    "GESTION TRESORERIE DIVISION DETENTRICE",
+                    "GESTION DES COMPTES BANCAIRES DIVISION DETENTRICE",
+                    "GESTION DE LA CAISSE DE MENUES DEPENSES DIVISION DETENTRICE",
+                    "GESTION REGLEMENT DES FACTURES PAR CAISSE DIVISION DETENTRICE",
+                    "GESTION AVANCES DE FONDS A JUSTIFIER DIVISION DETENTRICE",
+                    "GESTION COMPTABILITE DIVISION DETENTRICE",
+                    "GESTION ORGANISATION ET SYSTEMES COMPTABLES DIVISION DETENTRICE",
+                    "GESTION GUIDE D’IMPUTATION COMPTABLE : SCHEMAS DES PRINCIPALES ECRITURES COMPTABLES DIVISION DETENTRICE",
+                    "GESTION PLANIFICATION DES TRAVAUX COMPTABLES DIVISION DETENTRICE",
+                    "GESTION ANALYSE ET AUTOCONTROLE DES COMPTES DIVISION DETENTRICE",
+                    "GESTION CONTROLE ET AUDIT DIVISION DETENTRICE",
+                    "GESTION CONTROLE INTERNE DIVISION DETENTRICE",
+                    "GESTION CONTROLE EXTERNE DIVISION DETENTRICE",
+                    "GESTION PROTECTION (ASSURANCES ET GARANTIES) DIVISION DETENTRICE",
+                    "GESTION TETE DE DIVISION ACNEV DIVISION DETENTRICE",
+                    "GESTION CENTRALES D’ACHAT DIVISION DETENTRICE",
+                    "GESTION CENTRALES D’ACHAT DIVISION DETENTRICE",
+                    "GESTION ENTREPOTS D’ACHAT DIVISION DETENTRICE",
+                    "GESTION MARCHES D’ACHAT DIVISION DETENTRICE",
+                    "GESTION MAGASINS D’ACHAT DIVISION DETENTRICE",
+                    "GESTION BOUTIQUES D’ACHAT DIVISION DETENTRICE",
+                    "GESTION GUICHETS UNIQUES D’ACHAT DIVISION DETENTRICE",
+                    "GESTION CENTRALES DE PRODUCTION DIVISION DETENTRICE",
+                    "GESTION CENTRALES DE PRODUCTION DIVISION DETENTRICE",
+                    "GESTION ENTREPOTS DE PRODUCTION DIVISION DETENTRICE",
+                    "GESTION MARCHES DE PRODUCTION DIVISION DETENTRICE",
+                    "GESTION MAGASINS DE PRODUCTION DIVISION DETENTRICE",
+                    "GESTION BOUTIQUES DE PRODUCTION DIVISION DETENTRICE",
+                    "GESTION GUICHETS UNIQUES DE PRODUCTION DIVISION DETENTRICE",
+                    "GESTION CENTRALES DE TRANSFORMATION DIVISION DETENTRICE",
+                    "GESTION CENTRALES DE TRANSFORMATION DIVISION DETENTRICE",
+                    "GESTION ENTREPOTS DE TRANSFORMATION DIVISION DETENTRICE",
+                    "GESTION MARCHES DE TRANSFORMATION DIVISION DETENTRICE",
+                    "GESTION MAGASINS DE TRANSFORMATION DIVISION DETENTRICE",
+                    "GESTION BOUTIQUES DE TRANSFORMATION DIVISION DETENTRICE",
+                    "GESTION GUICHETS UNIQUES DE TRANSFORMATION DIVISION DETENTRICE",
+                    "GESTION CENTRALES DE VENTE DIVISION DETENTRICE",
+                    "GESTION CENTRALES DE VENTE DIVISION DETENTRICE",
+                    "GESTION ENTREPOTS DE VENTE DIVISION DETENTRICE",
+                    "GESTION MARCHES DE VENTE DIVISION DETENTRICE",
+                    "GESTION MAGASINS DE VENTE DIVISION DETENTRICE",
+                    "GESTION BOUTIQUES DE VENTE DIVISION DETENTRICE",
+                    "GESTION GUICHETS UNIQUES DE VENTE DIVISION DETENTRICE",
+                    "GESTION TETE DE DIVISION OPERATIONS DIVISION DETENTRICE",
+                    "GESTION SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "GESTION FICHE ODD SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "GESTION KSU SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "GESTION SM SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "GESTION EXPRESSIONS DIVISION DETENTRICE",
+                    "GESTION FICHE ODD EXPRESSIONS DIVISION DETENTRICE",
+                    "GESTION KSU EXPRESSIONS DIVISION DETENTRICE",
+                    "GESTION SM EXPRESSIONS DIVISION DETENTRICE",
+                    "GESTION REGLEMENTS DIVISION DETENTRICE",
+                    "GESTION FICHE ODD REGLEMENTS DIVISION DETENTRICE",
+                    "GESTION KSU REGLEMENTS DIVISION DETENTRICE",
+                    "GESTION SM REGLEMENTS DIVISION DETENTRICE",
+                    "GESTION RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION KSU RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION SM RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION KSU COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION SM COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION KSU ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION SM ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "GESTION KSU ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "GESTION SM ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "GESTION DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION KSU DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION SM DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION KSU RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION SM RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION KSU COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION SM COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION KSU ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION SM ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "GESTION KSU ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "GESTION SM ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "GESTION DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION KSU DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION SM DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "GESTION KSU TABLEAUX DE BORD SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "GESTION SM TABLEAUX DE BORD SOUSCRIPTIONS DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD EXPRESSIONS DIVISION DETENTRICE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD EXPRESSIONS DIVISION DETENTRICE",
+                    "GESTION KSU TABLEAUX DE BORD EXPRESSIONS DIVISION DETENTRICE",
+                    "GESTION SM TABLEAUX DE BORD EXPRESSIONS DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD REGLEMENTS DIVISION DETENTRICE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD REGLEMENTS DIVISION DETENTRICE",
+                    "GESTION KSU TABLEAUX DE BORD REGLEMENTS DIVISION DETENTRICE",
+                    "GESTION SM TABLEAUX DE BORD REGLEMENTS DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION KSU TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION SM TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION KSU TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION SM TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION KSU TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION SM TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "GESTION KSU TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "GESTION SM TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION KSU TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION SM TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION KSU TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION SM TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION KSU TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION SM TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION KSU TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION SM TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "GESTION KSU TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "GESTION SM TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION DETENTRICE",
+                    "GESTION TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION KSU TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION SM TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION DETENTRICE",
+                    "GESTION TETE DE DIVISION SERVICES DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM DIVISION DETENTRICE :",
+                    "GESTION SERVICES SMCIPN INTERIM ALERTE DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM RECLAMATION DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM TRAÇABILITE DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM RECOUVREMENT DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM GESTION AMIABLE CONTENTIEUX DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM REGLEMENT DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER ZONES MONETAIRES DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER PAYS DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER REGIONS OU EQUIVALENT DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER PREFECTURES OU EQUIVALENT DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER COMMUNES OU EQUIVALENT DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER CANTONS OU EQUIVALENT DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM OKSU OI MF 107 DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM OKSU OI MF 11000 DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM OKSU OI CMFH DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM BCRI PP OI DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM BCRI PM OI DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM NRPRE DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM SOLVABILITE ABSOLUE DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM MEVENTES ZERO DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM COÏNCIDENCE DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM ECHANGES DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM DESENDETTEMENT DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM GASPILLAGE ZERO DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM RECYCLAGE OPTIMAL DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM PLEIN USAGE DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM ASSURANCES DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM FRAIS DE PRESTATION DIVISION DETENTRICE",
+                    "GESTION SERVICES SMCIPN INTERIM KIT TECHNOPOLE DIVISION DETENTRICE",
+                    "GESTION DIVISION SURVEILLANCE",
+                    "GESTION TETE DE DIVISION TECHNOPOLE DIVISION SURVEILLANCE",
+                    "GESTION ACHATS DIVISION SURVEILLANCE",
+                    "GESTION PASSATION DE CONTRAT DE FOURNISSEURS DIVISION SURVEILLANCE",
+                    "GESTION SUIVI DES CONTRATS DIVISION SURVEILLANCE",
+                    "GESTION SUIVI DES DELAIS DE LIVRAISON DES COMMANDES DIVISION SURVEILLANCE",
+                    "GESTION ACHAT DE BPS DIVISION SURVEILLANCE",
+                    "GESTION RECEPTION D’UNE LIVRAISON DE BPS DIVISION SURVEILLANCE",
+                    "GESTION TRAITEMENT D’UNE FACTURE FOURNISSEUR DIVISION SURVEILLANCE",
+                    "GESTION STOCKS DIVISION SURVEILLANCE",
+                    "GESTION DES STOCKS BPS DIVISION SURVEILLANCE",
+                    "GESTION DES BPS DE TOUTE NATURE DIVISION SURVEILLANCE",
+                    "GESTION DE CARBURANT DIVISION SURVEILLANCE",
+                    "GESTION IMMOBILISATIONS DIVISION SURVEILLANCE",
+                    "GESTION PRINCIPES GENERAUX DIVISION SURVEILLANCE",
+                    "GESTION DES ENTREES DES IMMOBILISATIONS ET DU MATERIEL ROULANT DIVISION SURVEILLANCE",
+                    "GESTION DES SORTIES DES IMMOBILISATIONS ET DU MATERIEL ROULANT DIVISION SURVEILLANCE",
+                    "GESTION ENTRETIEN ET REPARATION DES IMMOBILISATIONS DIVISION SURVEILLANCE",
+                    "GESTION SECURISATION DES IMMOBILISATIONS DIVISION SURVEILLANCE",
+                    "GESTION DES VEHICULES ET DES MOTOS DIVISION SURVEILLANCE",
+                    "GESTION DES OT DIVISION SURVEILLANCE",
+                    "GESTION RECRUTEMENT DIVISION SURVEILLANCE",
+                    "GESTION TENUE DU DOSSIER DES GESTIONS OT DIVISION SURVEILLANCE",
+                    "GESTION FRAIS DE PRESTATIONS DIVISION SURVEILLANCE",
+                    "GESTION CONGES DIVISION SURVEILLANCE",
+                    "GESTION AUTRES AUTORISATIONS D’ABSENCES DIVISION SURVEILLANCE",
+                    "GESTION RUPTURE DU CONTRAT DE TRAVAIL DIVISION SURVEILLANCE",
+                    "GESTION MISSIONS DIVISION SURVEILLANCE",
+                    "GESTION EVALUATION DES GESTIONS OT DIVISION SURVEILLANCE",
+                    "GESTION JURIDIQUE DIVISION SURVEILLANCE",
+                    "GESTION TITRES ACTIONS DIVISION SURVEILLANCE",
+                    "GESTION TITRES FONCIERS DIVISION SURVEILLANCE",
+                    "GESTION TITRES OBLIGATIONS DIVISION SURVEILLANCE",
+                    "GESTION ENGAGEMENT DE LIVRAISON IRREVOCABLE DIVISION SURVEILLANCE",
+                    "GESTION ENGAGEMENT DE PRELEVEMENT IRREVOCABLE DIVISION SURVEILLANCE",
+                    "GESTION CARTES GRISES DES EQUIPEMENTS DIVISION SURVEILLANCE",
+                    "GESTION CONTRATS ET CONVENTIONS (NEGOCIATION FORMALISATION ET GESTION DES RELATIONS CONTRACTUELLES ET CONVENTIONNELLES) DIVISION SURVEILLANCE",
+                    "GESTION PROTECTION LEGALES DIVISION SURVEILLANCE",
+                    "GESTION CONVENTIONS DIVISION SURVEILLANCE",
+                    "GESTION CONTRATS GENERAUX DIVISION SURVEILLANCE",
+                    "GESTION TITRES DIVERS DIVISION SURVEILLANCE",
+                    "GESTION ASSURANCES DIVISION SURVEILLANCE",
+                    "GESTION GARANTIS DIVISION SURVEILLANCE",
+                    "GESTION PRECONTENTIEUX ET CONTENTIEUX DIVISION SURVEILLANCE",
+                    "GESTION RECOUVREMENT DE CREANCES DIVISION SURVEILLANCE",
+                    "GESTION REGLEMENTS DIVISION SURVEILLANCE",
+                    "GESTION TICKETS DE SUPPORTS DIVISION SURVEILLANCE",
+                    "GESTION PORTEFEUILLE DE LA PROPRIETE INTELLECTUELLE MCNP GIE ESMC PC DIVISION SURVEILLANCE",
+                    "GESTION PORTEFEUILLE DES SURETES DIVISION SURVEILLANCE",
+                    "GESTION VEILLE JURIDIQUE ET REGLEMENTAIRE DIVISION SURVEILLANCE",
+                    "GESTION INTEGRATION DE LA PLATEFORME GIE ESMC DANS L’ENVIRONNEMENT ECONOMICO-SOCIAL NATIONAL COMMUNAUTAIRE ET INTERNATIONAL DIVISION SURVEILLANCE",
+                    "GESTION DOCUMENTATION JURIDIQUE DIVISION SURVEILLANCE",
+                    "GESTION ASSISTANCE ET DES CONCOURS DIVERS DIVISION SURVEILLANCE",
+                    "GESTION ALERTES DIVISION SURVEILLANCE",
+                    "GESTION RECLAMATIONS DIVISION SURVEILLANCE",
+                    "GESTION RECOUVREMENTS DIVISION SURVEILLANCE",
+                    "GESTION PLANIFICATION GESTIONS DES PROJETS SUIVI ET EVALUATION DIVISION SURVEILLANCE",
+                    "GESTION CADRAGE PROJETS DIVISION SURVEILLANCE",
+                    "GESTION INITIALISATION PROJETS DIVISION SURVEILLANCE",
+                    "GESTION PLANIFICATION PROJETS DIVISION SURVEILLANCE",
+                    "GESTION REALISATION PROJETS DIVISION SURVEILLANCE",
+                    "GESTION CLOTURE PROJETS DIVISION SURVEILLANCE",
+                    "GESTION CONCEPTION DE TOUS PROJETS DIVISION SURVEILLANCE,",
+                    "GESTION DEFINITION DES TACHES TOUS PROJETS DIVISION SURVEILLANCE,",
+                    "GESTION DEFINITION DES RESSOURCES TOUS PROJET DIVISION SURVEILLANCE,",
+                    "GESTION PLANIFICATION DES TACHES TOUS PROJET DIVISION SURVEILLANCE,",
+                    "GESTION AFFECTATION DES TACHES TOUS PROJETS DIVISION SURVEILLANCE,",
+                    "GESTION VALIDATION DE PROJETS DIVISION SURVEILLANCE,",
+                    "GESTION AFFECTATION DES RESSOURCES TOUS PROJETS DIVISION SURVEILLANCE,",
+                    "GESTION SUIVI DES EXECUTIONS DES TACHES TOUS PROJET DIVISION SURVEILLANCE,",
+                    "GESTION EVALUATION DES EXECUTIONS TOUS PROJET DIVISION SURVEILLANCE,",
+                    "GESTION DOCUMENTATION DIVISION SURVEILLANCE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION SURVEILLANCE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION SURVEILLANCE",
+                    "GESTION EDITION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION SURVEILLANCE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION SURVEILLANCE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION SURVEILLANCE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION FICHIER AUDIO DIVISION SURVEILLANCE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION FICHIER AUDIO DIVISION SURVEILLANCE",
+                    "GESTION EDITION DE LA DOCUMENTATION FICHIER AUDIO DIVISION SURVEILLANCE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER AUDIO DIVISION SURVEILLANCE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION FICHIER AUDIO DIVISION SURVEILLANCE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION FICHIER VIDEO DIVISION SURVEILLANCE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION FICHIER VIDEO DIVISION SURVEILLANCE",
+                    "GESTION EDITION DE LA DOCUMENTATION FICHIER VIDEO DIVISION SURVEILLANCE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER VIDEO DIVISION SURVEILLANCE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION FICHIER VIDEO DIVISION SURVEILLANCE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION SURVEILLANCE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION SURVEILLANCE",
+                    "GESTION EDITION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION SURVEILLANCE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION SURVEILLANCE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION SURVEILLANCE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION SURVEILLANCE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION SURVEILLANCE",
+                    "GESTION EDITION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION SURVEILLANCE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION SURVEILLANCE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION SURVEILLANCE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION SURVEILLANCE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION SURVEILLANCE",
+                    "GESTION EDITION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION SURVEILLANCE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION SURVEILLANCE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION SURVEILLANCE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION SURVEILLANCE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION SURVEILLANCE",
+                    "GESTION EDITION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION SURVEILLANCE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION SURVEILLANCE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION SURVEILLANCE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION SURVEILLANCE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION SURVEILLANCE",
+                    "GESTION EDITION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION SURVEILLANCE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION SURVEILLANCE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION SURVEILLANCE",
+                    "GESTION POLES TIC DIVISION SURVEILLANCE",
+                    "GESTION RECHERCHE ET DEVELOPPEMENT DIVISION SURVEILLANCE",
+                    "GESTION SYSTEME ET RESEAUX DIVISION SURVEILLANCE",
+                    "GESTION CONNECTIVITE DIVISION SURVEILLANCE",
+                    "GESTION PERIPHERIQUES DIVISION SURVEILLANCE",
+                    "GESTION FORMATION ET APPRENTISSAGE PROGICIEL MCNP DIVISION SURVEILLANCE",
+                    "GESTION MARKETING ET COMMUNICATION PROGICIEL MCNP DIVISION SURVEILLANCE",
+                    "GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT D’ANALYSE DIVISION SURVEILLANCE",
+                    "GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT MANUEL DE L’UTILISATION DIVISION SURVEILLANCE",
+                    "GESTION TECHNIQUE DE LA R&D DIVISION SURVEILLANCE",
+                    "GESTION TECHNIQUE DE LA R&D APPLICATIONS MCNP DIVISION SURVEILLANCE",
+                    "GESTION ANALYSE DES SYSTEMES D’INFORMATION DIVISION SURVEILLANCE",
+                    "GESTION DEVELOPPEMENT ORIENTE COMPOSANTS ORIENTE SERVICE DIVISION SURVEILLANCE",
+                    "GESTION PRATIQUES DE PLATEFORME DE DEPLOIEMENT DIVISION SURVEILLANCE",
+                    "GESTION BASE DE DONNEES DIVISION SURVEILLANCE",
+                    "GESTION SECURITE LOGICIEL DIVISION SURVEILLANCE",
+                    "GESTION INTERFACES ET CONCEPTION GRAPHIQUE DIVISION SURVEILLANCE",
+                    "GESTION LOGISTIQUES DIVISION SURVEILLANCE",
+                    "GESTION TECHNIQUE DE CENTRES HEBERGEMENT DIVISION SURVEILLANCE",
+                    "GESTION TECHNIQUE D’ALIMENTATION ENERGIE REDONDANTE DIVISION SURVEILLANCE",
+                    "GESTION TECHNIQUE DE MATERIELS INFORMATIQUES DIVISION SURVEILLANCE",
+                    "GESTION TECHNIQUE DE SYSTEMES INFORMATIQUE LOGICIELS APPLICATIONS DIVISION SURVEILLANCE",
+                    "GESTION TECHNIQUE DE BASES DE DONNEES DIVISION SURVEILLANCE",
+                    "GESTION TECHNIQUE DE RESEAUX INFORMATIQUES DIVISION SURVEILLANCE",
+                    "GESTION CONNECTIVITE DIVISION SURVEILLANCE",
+                    "GESTION TECHNIQUE DES TELECOMMUNICATIONS DIVISION SURVEILLANCE",
+                    "GESTION PERIPHERIQUES DIVISION SURVEILLANCE",
+                    "GESTION TECHNIQUE DES KIT ET PERIPHERIQUES DIVISION SURVEILLANCE",
+                    "GESTION FORMATION ET APPRENTISSAGE NUMERIQUES DIVISION SURVEILLANCE",
+                    "GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT MANUEL DE DEPLOIEMENT DIVISION SURVEILLANCE",
+                    "GESTION COMMUNICATION PLATEFORME GIE ESMC DIVISION SURVEILLANCE",
+                    "GESTION MARKETING PLATEFORME GIE ESMC DIVISION SURVEILLANCE",
+                    "GESTION INFOGRAPHIE PLATEFORME GIE ESMC DIVISION SURVEILLANCE",
+                    "GESTION EVENEMENTIELS PLATEFORME GIE ESMC DIVISION SURVEILLANCE",
+                    "GESTION MULTIMEDIA PLATEFORME GIE ESMC DIVISION SURVEILLANCE",
+                    "GESTION WEB TV DIVISION SURVEILLANCE",
+                    "GESTION WEB RADIO DIVISION SURVEILLANCE",
+                    "GESTION BLOG DIVISION SURVEILLANCE",
+                    "GESTION RESEAU SOCIAUX PLATEFORME GIE ESMC DIVISION SURVEILLANCE",
+                    "GESTION FACEBOOK DIVISION SURVEILLANCE",
+                    "GESTION TWITTER DIVISION SURVEILLANCE",
+                    "GESTION INSTAGRAM DIVISION SURVEILLANCE",
+                    "GESTION YOUTUBE DIVISION SURVEILLANCE",
+                    "GESTION WHATSAPP DIVISION SURVEILLANCE",
+                    "GESTION TIK-TOK DIVISION SURVEILLANCE",
+                    "GESTION TELEGRAM DIVISION SURVEILLANCE",
+                    "GESTION LINKED IN DIVISION SURVEILLANCE",
+                    "GESTION VIBER DIVISION SURVEILLANCE",
+                    "GESTION MESSENGER DIVISION SURVEILLANCE",
+                    "GESTION IMMO DIVISION SURVEILLANCE",
+                    "GESTION VOLET MOBILISATION DES ASPECTS DIVISION SURVEILLANCE",
+                    "GESTION COMMUNICATION DIVISION SURVEILLANCE",
+                    "GESTION MARKETING DIVISION SURVEILLANCE",
+                    "GESTION MULTIMEDIA DIVISION SURVEILLANCE",
+                    "GESTION EVENEMENTIEL DIVISION SURVEILLANCE",
+                    "GESTION RELATIONS PUBLIQUES DIVISION SURVEILLANCE",
+                    "GESTION VOLET DEPLOIEMENT DES ASPECTS DIVISION SURVEILLANCE",
+                    "GESTION MISE EN PLACE DIVISION SURVEILLANCE",
+                    "GESTION OPERATIONNALITE DIVISION SURVEILLANCE",
+                    "GESTION VOLET EXPLOITATION DES ASPECTS DIVISION SURVEILLANCE",
+                    "GESTION MISE EN ŒUVRE DIVISION SURVEILLANCE",
+                    "GESTION MAINTIEN PERPETUEL DIVISION SURVEILLANCE",
+                    "GESTION FRANCHISES DIVISION SURVEILLANCE",
+                    "GESTION TETE DE DIVISION FILIERE DIVISION SURVEILLANCE",
+                    "GESTION BUDGET DIVISION SURVEILLANCE",
+                    "GESTION ELABORATION ET APPROBATION DES PLANS D’ACTIONS ET BUDGETS ANNUELS DIVISION SURVEILLANCE",
+                    "GESTION CONTROLE DES ENGAGEMENTS ET SUIVI BUDGETAIRE/ANALYTIQUE SOUS LE LOGICIEL DIVISION SURVEILLANCE",
+                    "GESTION MOBILISATION DE RESSOURCES DIVISION SURVEILLANCE",
+                    "GESTION APPROVISIONNEMENT INITIAL DIVISION SURVEILLANCE",
+                    "GESTION REAPPROVISIONNEMENT DES COMPTES DAT DIVISION SURVEILLANCE",
+                    "GESTION PAIEMENT DES OPI COUVERTS PAR DES LIGNES DE CREDITS DOCUMENTAIRES DIVISION SURVEILLANCE",
+                    "GESTION JUSTIFICATION DES MONTANTS DE SOUSCRIPTION ET DES OPI EMIS AUX FOURNISSEURS DIVISION SURVEILLANCE",
+                    "GESTION TRESORERIE DIVISION SURVEILLANCE",
+                    "GESTION DES COMPTES BANCAIRES DIVISION SURVEILLANCE",
+                    "GESTION DE LA CAISSE DE MENUES DEPENSES DIVISION SURVEILLANCE",
+                    "GESTION REGLEMENT DES FACTURES PAR CAISSE DIVISION SURVEILLANCE",
+                    "GESTION AVANCES DE FONDS A JUSTIFIER DIVISION SURVEILLANCE",
+                    "GESTION COMPTABILITE DIVISION SURVEILLANCE",
+                    "GESTION ORGANISATION ET SYSTEMES COMPTABLES DIVISION SURVEILLANCE",
+                    "GESTION GUIDE D’IMPUTATION COMPTABLE : SCHEMAS DES PRINCIPALES ECRITURES COMPTABLES DIVISION SURVEILLANCE",
+                    "GESTION PLANIFICATION DES TRAVAUX COMPTABLES DIVISION SURVEILLANCE",
+                    "GESTION ANALYSE ET AUTOCONTROLE DES COMPTES DIVISION SURVEILLANCE",
+                    "GESTION CONTROLE ET AUDIT DIVISION SURVEILLANCE",
+                    "GESTION CONTROLE INTERNE DIVISION SURVEILLANCE",
+                    "GESTION CONTROLE EXTERNE DIVISION SURVEILLANCE",
+                    "GESTION PROTECTION (ASSURANCES ET GARANTIES) DIVISION SURVEILLANCE",
+                    "GESTION TETE DE DIVISION ACNEV DIVISION SURVEILLANCE",
+                    "GESTION CENTRALES D’ACHAT DIVISION SURVEILLANCE",
+                    "GESTION CENTRALES D’ACHAT DIVISION SURVEILLANCE",
+                    "GESTION ENTREPOTS D’ACHAT DIVISION SURVEILLANCE",
+                    "GESTION MARCHES D’ACHAT DIVISION SURVEILLANCE",
+                    "GESTION MAGASINS D’ACHAT DIVISION SURVEILLANCE",
+                    "GESTION BOUTIQUES D’ACHAT DIVISION SURVEILLANCE",
+                    "GESTION GUICHETS UNIQUES D’ACHAT DIVISION SURVEILLANCE",
+                    "GESTION CENTRALES DE PRODUCTION DIVISION SURVEILLANCE",
+                    "GESTION CENTRALES DE PRODUCTION DIVISION SURVEILLANCE",
+                    "GESTION ENTREPOTS DE PRODUCTION DIVISION SURVEILLANCE",
+                    "GESTION MARCHES DE PRODUCTION DIVISION SURVEILLANCE",
+                    "GESTION MAGASINS DE PRODUCTION DIVISION SURVEILLANCE",
+                    "GESTION BOUTIQUES DE PRODUCTION DIVISION SURVEILLANCE",
+                    "GESTION GUICHETS UNIQUES DE PRODUCTION DIVISION SURVEILLANCE",
+                    "GESTION CENTRALES DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "GESTION CENTRALES DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "GESTION ENTREPOTS DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "GESTION MARCHES DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "GESTION MAGASINS DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "GESTION BOUTIQUES DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "GESTION GUICHETS UNIQUES DE TRANSFORMATION DIVISION SURVEILLANCE",
+                    "GESTION CENTRALES DE VENTE DIVISION SURVEILLANCE",
+                    "GESTION CENTRALES DE VENTE DIVISION SURVEILLANCE",
+                    "GESTION ENTREPOTS DE VENTE DIVISION SURVEILLANCE",
+                    "GESTION MARCHES DE VENTE DIVISION SURVEILLANCE",
+                    "GESTION MAGASINS DE VENTE DIVISION SURVEILLANCE",
+                    "GESTION BOUTIQUES DE VENTE DIVISION SURVEILLANCE",
+                    "GESTION GUICHETS UNIQUES DE VENTE DIVISION SURVEILLANCE",
+                    "GESTION TETE DE DIVISION OPERATIONS DIVISION SURVEILLANCE",
+                    "GESTION SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "GESTION KSU SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "GESTION SM SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "GESTION EXPRESSIONS DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD EXPRESSIONS DIVISION SURVEILLANCE",
+                    "GESTION KSU EXPRESSIONS DIVISION SURVEILLANCE",
+                    "GESTION SM EXPRESSIONS DIVISION SURVEILLANCE",
+                    "GESTION REGLEMENTS DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD REGLEMENTS DIVISION SURVEILLANCE",
+                    "GESTION KSU REGLEMENTS DIVISION SURVEILLANCE",
+                    "GESTION SM REGLEMENTS DIVISION SURVEILLANCE",
+                    "GESTION RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION SM RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION SM COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION SM ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION SM ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION SM DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION SM RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION SM COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION SM ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION SM ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION SM DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "GESTION KSU TABLEAUX DE BORD SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "GESTION SM TABLEAUX DE BORD SOUSCRIPTIONS DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD EXPRESSIONS DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD EXPRESSIONS DIVISION SURVEILLANCE",
+                    "GESTION KSU TABLEAUX DE BORD EXPRESSIONS DIVISION SURVEILLANCE",
+                    "GESTION SM TABLEAUX DE BORD EXPRESSIONS DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD REGLEMENTS DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD REGLEMENTS DIVISION SURVEILLANCE",
+                    "GESTION KSU TABLEAUX DE BORD REGLEMENTS DIVISION SURVEILLANCE",
+                    "GESTION SM TABLEAUX DE BORD REGLEMENTS DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION SM TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION SM TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION SM TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION SM TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION SM TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION SM TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION SM TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION SM TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION SM TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION KSU TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION SM TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION SURVEILLANCE",
+                    "GESTION TETE DE DIVISION SERVICES DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM DIVISION SURVEILLANCE :",
+                    "GESTION SERVICES SMCIPN INTERIM ALERTE DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM RECLAMATION DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM TRAÇABILITE DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM RECOUVREMENT DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM GESTION AMIABLE CONTENTIEUX DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM REGLEMENT DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER ZONES MONETAIRES DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER PAYS DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER REGIONS OU EQUIVALENT DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER PREFECTURES OU EQUIVALENT DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER COMMUNES OU EQUIVALENT DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER CANTONS OU EQUIVALENT DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM OKSU OI MF 107 DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM OKSU OI MF 11000 DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM OKSU OI CMFH DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM BCRI PP OI DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM BCRI PM OI DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM NRPRE DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM SOLVABILITE ABSOLUE DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM MEVENTES ZERO DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM COÏNCIDENCE DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM ECHANGES DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM DESENDETTEMENT DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM GASPILLAGE ZERO DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM RECYCLAGE OPTIMAL DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM PLEIN USAGE DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM ASSURANCES DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM FRAIS DE PRESTATION DIVISION SURVEILLANCE",
+                    "GESTION SERVICES SMCIPN INTERIM KIT TECHNOPOLE DIVISION SURVEILLANCE",
+                    "GESTION DIVISION EXECUTANTE",
+                    "GESTION TETE DE DIVISION TECHNOPOLE DIVISION EXECUTANTE",
+                    "GESTION ACHATS DIVISION EXECUTANTE",
+                    "GESTION PASSATION DE CONTRAT DE FOURNISSEURS DIVISION EXECUTANTE",
+                    "GESTION SUIVI DES CONTRATS DIVISION EXECUTANTE",
+                    "GESTION SUIVI DES DELAIS DE LIVRAISON DES COMMANDES DIVISION EXECUTANTE",
+                    "GESTION ACHAT DE BPS DIVISION EXECUTANTE",
+                    "GESTION RECEPTION D’UNE LIVRAISON DE BPS DIVISION EXECUTANTE",
+                    "GESTION TRAITEMENT D’UNE FACTURE FOURNISSEUR DIVISION EXECUTANTE",
+                    "GESTION STOCKS DIVISION EXECUTANTE",
+                    "GESTION DES STOCKS BPS DIVISION EXECUTANTE",
+                    "GESTION DES BPS DE TOUTE NATURE DIVISION EXECUTANTE",
+                    "GESTION DE CARBURANT DIVISION EXECUTANTE",
+                    "GESTION IMMOBILISATIONS DIVISION EXECUTANTE",
+                    "GESTION PRINCIPES GENERAUX DIVISION EXECUTANTE",
+                    "GESTION DES ENTREES DES IMMOBILISATIONS ET DU MATERIEL ROULANT DIVISION EXECUTANTE",
+                    "GESTION DES SORTIES DES IMMOBILISATIONS ET DU MATERIEL ROULANT DIVISION EXECUTANTE",
+                    "GESTION ENTRETIEN ET REPARATION DES IMMOBILISATIONS DIVISION EXECUTANTE",
+                    "GESTION SECURISATION DES IMMOBILISATIONS DIVISION EXECUTANTE",
+                    "GESTION DES VEHICULES ET DES MOTOS DIVISION EXECUTANTE",
+                    "GESTION DES OT DIVISION EXECUTANTE",
+                    "GESTION RECRUTEMENT DIVISION EXECUTANTE",
+                    "GESTION TENUE DU DOSSIER DES GESTIONS OT DIVISION EXECUTANTE",
+                    "GESTION FRAIS DE PRESTATIONS DIVISION EXECUTANTE",
+                    "GESTION CONGES DIVISION EXECUTANTE",
+                    "GESTION AUTRES AUTORISATIONS D’ABSENCES DIVISION EXECUTANTE",
+                    "GESTION RUPTURE DU CONTRAT DE TRAVAIL DIVISION EXECUTANTE",
+                    "GESTION MISSIONS DIVISION EXECUTANTE",
+                    "GESTION EVALUATION DES GESTIONS OT DIVISION EXECUTANTE",
+                    "GESTION JURIDIQUE DIVISION EXECUTANTE",
+                    "GESTION TITRES ACTIONS DIVISION EXECUTANTE",
+                    "GESTION TITRES FONCIERS DIVISION EXECUTANTE",
+                    "GESTION TITRES OBLIGATIONS DIVISION EXECUTANTE",
+                    "GESTION ENGAGEMENT DE LIVRAISON IRREVOCABLE DIVISION EXECUTANTE",
+                    "GESTION ENGAGEMENT DE PRELEVEMENT IRREVOCABLE DIVISION EXECUTANTE",
+                    "GESTION CARTES GRISES DES EQUIPEMENTS DIVISION EXECUTANTE",
+                    "GESTION CONTRATS ET CONVENTIONS (NEGOCIATION FORMALISATION ET GESTION DES RELATIONS CONTRACTUELLES ET CONVENTIONNELLES) DIVISION EXECUTANTE",
+                    "GESTION PROTECTION LEGALES DIVISION EXECUTANTE",
+                    "GESTION CONVENTIONS DIVISION EXECUTANTE",
+                    "GESTION CONTRATS GENERAUX DIVISION EXECUTANTE",
+                    "GESTION TITRES DIVERS DIVISION EXECUTANTE",
+                    "GESTION ASSURANCES DIVISION EXECUTANTE",
+                    "GESTION GARANTIS DIVISION EXECUTANTE",
+                    "GESTION PRECONTENTIEUX ET CONTENTIEUX DIVISION EXECUTANTE",
+                    "GESTION RECOUVREMENT DE CREANCES DIVISION EXECUTANTE",
+                    "GESTION REGLEMENTS DIVISION EXECUTANTE",
+                    "GESTION TICKETS DE SUPPORTS DIVISION EXECUTANTE",
+                    "GESTION PORTEFEUILLE DE LA PROPRIETE INTELLECTUELLE MCNP GIE ESMC PC DIVISION EXECUTANTE",
+                    "GESTION PORTEFEUILLE DES SURETES DIVISION EXECUTANTE",
+                    "GESTION VEILLE JURIDIQUE ET REGLEMENTAIRE DIVISION EXECUTANTE",
+                    "GESTION INTEGRATION DE LA PLATEFORME GIE ESMC DANS L’ENVIRONNEMENT ECONOMICO-SOCIALNATIONAL COMMUNAUTAIRE ET INTERNATIONAL DIVISION EXECUTANTE",
+                    "GESTION DOCUMENTATION JURIDIQUE DIVISION EXECUTANTE",
+                    "GESTION ASSISTANCE ET DES CONCOURS DIVERS DIVISION EXECUTANTE",
+                    "GESTION ALERTES DIVISION EXECUTANTE",
+                    "GESTION RECLAMATIONS DIVISION EXECUTANTE",
+                    "GESTION RECOUVREMENTS DIVISION EXECUTANTE",
+                    "GESTION PLANIFICATION GESTIONS DES PROJETS SUIVI ET EVALUATION DIVISION EXECUTANTE",
+                    "GESTION CADRAGE PROJETS DIVISION EXECUTANTE",
+                    "GESTION INITIALISATION PROJETS DIVISION EXECUTANTE",
+                    "GESTION PLANIFICATION PROJETS DIVISION EXECUTANTE",
+                    "GESTION REALISATION PROJETS DIVISION EXECUTANTE",
+                    "GESTION CLOTURE PROJETS DIVISION EXECUTANTE",
+                    "GESTION CONCEPTION DE TOUS PROJETS DIVISION EXECUTANTE,",
+                    "GESTION DEFINITION DES TACHES TOUS PROJETS DIVISION EXECUTANTE,",
+                    "GESTION DEFINITION DES RESSOURCES TOUS PROJET DIVISION EXECUTANTE,",
+                    "GESTION PLANIFICATION DES TACHES TOUS PROJET DIVISION EXECUTANTE,",
+                    "GESTION AFFECTATION DES TACHES TOUS PROJETS DIVISION EXECUTANTE,",
+                    "GESTION VALIDATION DE PROJETS DIVISION EXECUTANTE,",
+                    "GESTION AFFECTATION DES RESSOURCES TOUS PROJETS DIVISION EXECUTANTE,",
+                    "GESTION SUIVI DES EXECUTIONS DES TACHES TOUS PROJET DIVISION EXECUTANTE,",
+                    "GESTION EVALUATION DES EXECUTIONS TOUS PROJET DIVISION EXECUTANTE,",
+                    "GESTION DOCUMENTATION DIVISION EXECUTANTE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION EXECUTANTE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION EXECUTANTE",
+                    "GESTION EDITION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION EXECUTANTE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION EXECUTANTE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION FICHIER TEXTE NUMERIQUE DIVISION EXECUTANTE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION FICHIER AUDIO DIVISION EXECUTANTE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION FICHIER AUDIO DIVISION EXECUTANTE",
+                    "GESTION EDITION DE LA DOCUMENTATION FICHIER AUDIO DIVISION EXECUTANTE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER AUDIO DIVISION EXECUTANTE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION FICHIER AUDIO DIVISION EXECUTANTE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION FICHIER VIDEO DIVISION EXECUTANTE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION FICHIER VIDEO DIVISION EXECUTANTE",
+                    "GESTION EDITION DE LA DOCUMENTATION FICHIER VIDEO DIVISION EXECUTANTE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER VIDEO DIVISION EXECUTANTE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION FICHIER VIDEO DIVISION EXECUTANTE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION EXECUTANTE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION EXECUTANTE",
+                    "GESTION EDITION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION EXECUTANTE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION EXECUTANTE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION FICHIER VISUELLE DIVISION EXECUTANTE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION EXECUTANTE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION EXECUTANTE",
+                    "GESTION EDITION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION EXECUTANTE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION EXECUTANTE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE IMPRIMEE DIVISION EXECUTANTE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION EXECUTANTE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION EXECUTANTE",
+                    "GESTION EDITION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION EXECUTANTE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION EXECUTANTE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE AUDIO DIVISION EXECUTANTE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION EXECUTANTE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION EXECUTANTE",
+                    "GESTION EDITION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION EXECUTANTE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION EXECUTANTE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE VIDEO DIVISION EXECUTANTE",
+                    "GESTION CONCEPTION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION EXECUTANTE",
+                    "GESTION ELABORATION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION EXECUTANTE",
+                    "GESTION EDITION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION EXECUTANTE",
+                    "GESTION DISTRIBUTION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION EXECUTANTE",
+                    "GESTION CONSERVATION DE LA DOCUMENTATION PHYSIQUE VISUELLE DIVISION EXECUTANTE",
+                    "GESTION POLES TIC DIVISION EXECUTANTE",
+                    "GESTION RECHERCHE ET DEVELOPPEMENT DIVISION EXECUTANTE",
+                    "GESTION SYSTEME ET RESEAUX DIVISION EXECUTANTE",
+                    "GESTION CONNECTIVITE DIVISION EXECUTANTE",
+                    "GESTION PERIPHERIQUES DIVISION EXECUTANTE",
+                    "GESTION FORMATION ET APPRENTISSAGE PROGICIEL MCNP DIVISION EXECUTANTE",
+                    "GESTION MARKETING ET COMMUNICATION PROGICIEL MCNP DIVISION EXECUTANTE",
+                    "GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT D’ANALYSE DIVISION EXECUTANTE",
+                    "GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT MANUEL DE L’UTILISATION DIVISION EXECUTANTE",
+                    "GESTION TECHNIQUE DE LA R&D DIVISION EXECUTANTE",
+                    "GESTION TECHNIQUE DE LA R&D APPLICATIONS MCNP DIVISION EXECUTANTE",
+                    "GESTION ANALYSE DES SYSTEMES D’INFORMATION DIVISION EXECUTANTE",
+                    "GESTION DEVELOPPEMENT ORIENTE COMPOSANTS ORIENTE SERVICE DIVISION EXECUTANTE",
+                    "GESTION PRATIQUES DE PLATEFORME DE DEPLOIEMENT DIVISION EXECUTANTE",
+                    "GESTION BASE DE DONNEES DIVISION EXECUTANTE",
+                    "GESTION SECURITE LOGICIEL DIVISION EXECUTANTE",
+                    "GESTION INTERFACES ET CONCEPTION GRAPHIQUE DIVISION EXECUTANTE",
+                    "GESTION LOGISTIQUES DIVISION EXECUTANTE",
+                    "GESTION TECHNIQUE DE CENTRES HEBERGEMENT DIVISION EXECUTANTE",
+                    "GESTION TECHNIQUE D’ALIMENTATION ENERGIE REDONDANTE DIVISION EXECUTANTE",
+                    "GESTION TECHNIQUE DE MATERIELS INFORMATIQUES DIVISION EXECUTANTE",
+                    "GESTION TECHNIQUE DE SYSTEMES INFORMATIQUE LOGICIELS APPLICATIONS DIVISION EXECUTANTE",
+                    "GESTION TECHNIQUE DE BASES DE DONNEES DIVISION EXECUTANTE",
+                    "GESTION TECHNIQUE DE RESEAUX INFORMATIQUES DIVISION EXECUTANTE",
+                    "GESTION CONNECTIVITE DIVISION EXECUTANTE",
+                    "GESTION TECHNIQUE DES TELECOMMUNICATIONS DIVISION EXECUTANTE",
+                    "GESTION PERIPHERIQUES DIVISION EXECUTANTE",
+                    "GESTION TECHNIQUE DES KIT ET PERIPHERIQUES DIVISION EXECUTANTE",
+                    "GESTION FORMATION ET APPRENTISSAGE NUMERIQUES DIVISION EXECUTANTE",
+                    "GESTION TECHNIQUE DE LA CONCEPTION ET ACTUALISATION DU DOCUMENT MANUEL DE DEPLOIEMENT DIVISION EXECUTANTE",
+                    "GESTION COMMUNICATION PLATEFORME GIE ESMC DIVISION EXECUTANTE",
+                    "GESTION MARKETING PLATEFORME GIE ESMC DIVISION EXECUTANTE",
+                    "GESTION INFOGRAPHIE PLATEFORME GIE ESMC DIVISION EXECUTANTE",
+                    "GESTION EVENEMENTIELS PLATEFORME GIE ESMC DIVISION EXECUTANTE",
+                    "GESTION MULTIMEDIA PLATEFORME GIE ESMC DIVISION EXECUTANTE",
+                    "GESTION WEB TV DIVISION EXECUTANTE",
+                    "GESTION WEB RADIO DIVISION EXECUTANTE",
+                    "GESTION BLOG DIVISION EXECUTANTE",
+                    "GESTION RESEAU SOCIAUX PLATEFORME GIE ESMC DIVISION EXECUTANTE",
+                    "GESTION FACEBOOK DIVISION EXECUTANTE",
+                    "GESTION TWITTER DIVISION EXECUTANTE",
+                    "GESTION INSTAGRAM DIVISION EXECUTANTE",
+                    "GESTION YOUTUBE DIVISION EXECUTANTE",
+                    "GESTION WHATSAPP DIVISION EXECUTANTE",
+                    "GESTION TIK-TOK DIVISION EXECUTANTE",
+                    "GESTION TELEGRAM DIVISION EXECUTANTE",
+                    "GESTION LINKED IN DIVISION EXECUTANTE",
+                    "GESTION VIBER DIVISION EXECUTANTE",
+                    "GESTION MESSENGER DIVISION EXECUTANTE",
+                    "GESTION IMMO DIVISION EXECUTANTE",
+                    "GESTION VOLET MOBILISATION DES ASPECTS DIVISION EXECUTANTE",
+                    "GESTION COMMUNICATION DIVISION EXECUTANTE",
+                    "GESTION MARKETING DIVISION EXECUTANTE",
+                    "GESTION MULTIMEDIA DIVISION EXECUTANTE",
+                    "GESTION EVENEMENTIEL DIVISION EXECUTANTE",
+                    "GESTION RELATIONS PUBLIQUES DIVISION EXECUTANTE",
+                    "GESTION VOLET DEPLOIEMENT DES ASPECTS DIVISION EXECUTANTE",
+                    "GESTION MISE EN PLACE DIVISION EXECUTANTE",
+                    "GESTION OPERATIONNALITE DIVISION EXECUTANTE",
+                    "GESTION VOLET EXPLOITATION DES ASPECTS DIVISION EXECUTANTE",
+                    "GESTION MISE EN ŒUVRE DIVISION EXECUTANTE",
+                    "GESTION MAINTIEN PERPETUEL DIVISION EXECUTANTE",
+                    "GESTION FRANCHISES DIVISION EXECUTANTE",
+                    "GESTION TETE DE DIVISION FILIERE DIVISION EXECUTANTE",
+                    "GESTION BUDGET DIVISION EXECUTANTE",
+                    "GESTION ELABORATION ET APPROBATION DES PLANS D’ACTIONS ET BUDGETS ANNUELS DIVISION EXECUTANTE",
+                    "GESTION CONTROLE DES ENGAGEMENTS ET SUIVI BUDGETAIRE/ANALYTIQUE SOUS LE LOGICIEL DIVISION EXECUTANTE",
+                    "GESTION MOBILISATION DE RESSOURCES DIVISION EXECUTANTE",
+                    "GESTION APPROVISIONNEMENT INITIAL DIVISION EXECUTANTE",
+                    "GESTION REAPPROVISIONNEMENT DES COMPTES DAT DIVISION EXECUTANTE",
+                    "GESTION PAIEMENT DES OPI COUVERTS PAR DES LIGNES DE CREDITS DOCUMENTAIRES DIVISION EXECUTANTE",
+                    "GESTION JUSTIFICATION DES MONTANTS DE SOUSCRIPTION ET DES OPI EMIS AUX FOURNISSEURS DIVISION EXECUTANTE",
+                    "GESTION TRESORERIE DIVISION EXECUTANTE",
+                    "GESTION DES COMPTES BANCAIRES DIVISION EXECUTANTE",
+                    "GESTION DE LA CAISSE DE MENUES DEPENSES DIVISION EXECUTANTE",
+                    "GESTION REGLEMENT DES FACTURES PAR CAISSE DIVISION EXECUTANTE",
+                    "GESTION AVANCES DE FONDS A JUSTIFIER DIVISION EXECUTANTE",
+                    "GESTION COMPTABILITE DIVISION EXECUTANTE",
+                    "GESTION ORGANISATION ET SYSTEMES COMPTABLES DIVISION EXECUTANTE",
+                    "GESTION GUIDE D’IMPUTATION COMPTABLE : SCHEMAS DES PRINCIPALES ECRITURES COMPTABLES DIVISION EXECUTANTE",
+                    "GESTION PLANIFICATION DES TRAVAUX COMPTABLES DIVISION EXECUTANTE",
+                    "GESTION ANALYSE ET AUTOCONTROLE DES COMPTES DIVISION EXECUTANTE",
+                    "GESTION CONTROLE ET AUDIT DIVISION EXECUTANTE",
+                    "GESTION CONTROLE INTERNE DIVISION EXECUTANTE",
+                    "GESTION CONTROLE EXTERNE DIVISION EXECUTANTE",
+                    "GESTION PROTECTION (ASSURANCES ET GARANTIES) DIVISION EXECUTANTE",
+                    "GESTION TETE DE DIVISION ACNEV DIVISION EXECUTANTE",
+                    "GESTION CENTRALES D’ACHAT DIVISION EXECUTANTE",
+                    "GESTION CENTRALES D’ACHAT DIVISION EXECUTANTE",
+                    "GESTION ENTREPOTS D’ACHAT DIVISION EXECUTANTE",
+                    "GESTION MARCHES D’ACHAT DIVISION EXECUTANTE",
+                    "GESTION MAGASINS D’ACHAT DIVISION EXECUTANTE",
+                    "GESTION BOUTIQUES D’ACHAT DIVISION EXECUTANTE",
+                    "GESTION GUICHETS UNIQUES D’ACHAT DIVISION EXECUTANTE",
+                    "GESTION CENTRALES DE PRODUCTION DIVISION EXECUTANTE",
+                    "GESTION CENTRALES DE PRODUCTION DIVISION EXECUTANTE",
+                    "GESTION ENTREPOTS DE PRODUCTION DIVISION EXECUTANTE",
+                    "GESTION MARCHES DE PRODUCTION DIVISION EXECUTANTE",
+                    "GESTION MAGASINS DE PRODUCTION DIVISION EXECUTANTE",
+                    "GESTION BOUTIQUES DE PRODUCTION DIVISION EXECUTANTE",
+                    "GESTION GUICHETS UNIQUES DE PRODUCTION DIVISION EXECUTANTE",
+                    "GESTION CENTRALES DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "GESTION CENTRALES DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "GESTION ENTREPOTS DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "GESTION MARCHES DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "GESTION MAGASINS DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "GESTION BOUTIQUES DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "GESTION GUICHETS UNIQUES DE TRANSFORMATION DIVISION EXECUTANTE",
+                    "GESTION CENTRALES DE VENTE DIVISION EXECUTANTE",
+                    "GESTION CENTRALES DE VENTE DIVISION EXECUTANTE",
+                    "GESTION ENTREPOTS DE VENTE DIVISION EXECUTANTE",
+                    "GESTION MARCHES DE VENTE DIVISION EXECUTANTE",
+                    "GESTION MAGASINS DE VENTE DIVISION EXECUTANTE",
+                    "GESTION BOUTIQUES DE VENTE DIVISION EXECUTANTE",
+                    "GESTION GUICHETS UNIQUES DE VENTE DIVISION EXECUTANTE",
+                    "GESTION TETE DE DIVISION OPERATIONS DIVISION EXECUTANTE",
+                    "GESTION SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "GESTION KSU SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "GESTION SM SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "GESTION EXPRESSIONS DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD EXPRESSIONS DIVISION EXECUTANTE",
+                    "GESTION KSU EXPRESSIONS DIVISION EXECUTANTE",
+                    "GESTION SM EXPRESSIONS DIVISION EXECUTANTE",
+                    "GESTION REGLEMENTS DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD REGLEMENTS DIVISION EXECUTANTE",
+                    "GESTION KSU REGLEMENTS DIVISION EXECUTANTE",
+                    "GESTION SM REGLEMENTS DIVISION EXECUTANTE",
+                    "GESTION RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION KSU RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION SM RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION KSU COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION SM COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION KSU ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION SM ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION KSU ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION SM ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION KSU DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION SM DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION KSU RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION SM RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION KSU COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION SM COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION KSU ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION SM ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION KSU ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION SM ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION KSU DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION SM DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "GESTION KSU TABLEAUX DE BORD SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "GESTION SM TABLEAUX DE BORD SOUSCRIPTIONS DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD EXPRESSIONS DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD EXPRESSIONS DIVISION EXECUTANTE",
+                    "GESTION KSU TABLEAUX DE BORD EXPRESSIONS DIVISION EXECUTANTE",
+                    "GESTION SM TABLEAUX DE BORD EXPRESSIONS DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD REGLEMENTS DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD REGLEMENTS DIVISION EXECUTANTE",
+                    "GESTION KSU TABLEAUX DE BORD REGLEMENTS DIVISION EXECUTANTE",
+                    "GESTION SM TABLEAUX DE BORD REGLEMENTS DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION KSU TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION SM TABLEAUX DE BORD RAPPROCHEMENTS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION KSU TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION SM TABLEAUX DE BORD COMPENSATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION KSU TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION SM TABLEAUX DE BORD ANNULATIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION KSU TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION SM TABLEAUX DE BORD ARCHIVAGES HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION KSU TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION SM TABLEAUX DE BORD DESTRUCTIONS HOMOGENES DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION KSU TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION SM TABLEAUX DE BORD RAPPROCHEMENTS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION KSU TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION SM TABLEAUX DE BORD COMPENSATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION KSU TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION SM TABLEAUX DE BORD ANNULATIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION KSU TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION SM TABLEAUX DE BORD ARCHIVAGES HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION FICHE ODD TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION KSU TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION SM TABLEAUX DE BORD DESTRUCTIONS HETEROGENES DIVISION EXECUTANTE",
+                    "GESTION TETE DE DIVISION SERVICES DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM ALERTE DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM RECLAMATION DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM TRAÇABILITE DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM RECOUVREMENT DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM GESTION AMIABLE CONTENTIEUX DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM REGLEMENT DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER ZONES MONETAIRES DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER PAYS DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER REGIONS OU EQUIVALENT DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER PREFECTURES OU EQUIVALENT DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER COMMUNES OU EQUIVALENT DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM BALANCE INTER CANTONS OU EQUIVALENT DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM OKSU OI MF 107 DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM OKSU OI MF 11000 DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM OKSU OI CMFH DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM BCRI PP OI DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM BCRI PM OI DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM NRPRE DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM SOLVABILITE ABSOLUE DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM MEVENTES ZERO DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM COÏNCIDENCE DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM ECHANGES DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM DESENDETTEMENT DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM GASPILLAGE ZERO DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM RECYCLAGE OPTIMAL DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM PLEIN USAGE DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM ASSURANCES DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM FRAIS DE PRESTATION DIVISION EXECUTANTE",
+                    "GESTION SERVICES SMCIPN INTERIM KIT TECHNOPOLE DIVISION EXECUTANTE",
+                    "GESTION COMITE DES PIONNIERS",
+                    "GESTION PIONNIER GENERAL ADJOINT",
+                    "GESTION RPPE PC",
+                    "GESTION SRPPTEE PC",
+                    "GESTION SRPPTNE PC",
+                    "GESTION SRPPTPLE PC",
+                    "GESTION SRPPTARE PC",
+                    "GESTION SRPPTSE PC",
+                    "GESTION SRPPTCHE PC",
+                    "GESTION SRPPTME PC",
+                    "GESTION SRPPTHE PC",
+                    "GESTION SRPPTCOE PC",
+                    "GESTION SRPPTAE PC",
+                    "GESTION SRPPTMAE PC",
+                    "GESTION SRPPTENE PC",
+                    "GESTION SRPPTCE PC",
+                    "GESTION SRPPTEXE PC",
+                    "GESTION SRPPTIE PC",
+                    "GESTION SRPPOBPSDE PC",
+                    "GESTION SRPPOBPSE PC",
+                    "GESTION SRPPOPE PC",
+                    "GESTION SRPPOTE PC",
+                    "GESTION SRPPOKSUE PC",
+                    "GESTION SRPPOIE PC",
+                    "GESTION SRPPOME PC",
+                    "GESTION ROSCE PC ODD 17",
+                    "GESTION ROSCE PC ODD 1",
+                    "GESTION ROSCE PC ODD 2",
+                    "GESTION ROSCE PC ODD 3",
+                    "GESTION ROSCE PC ODD 4",
+                    "GESTION ROSCE PC ODD 5",
+                    "GESTION ROSCE PC ODD 6",
+                    "GESTION ROSCE PC ODD 7",
+                    "GESTION ROSCE PC ODD 8",
+                    "GESTION ROSCE PC ODD 9",
+                    "GESTION ROSCE PC ODD 10",
+                    "GESTION ROSCE PC ODD 11",
+                    "GESTION ROSCE PC ODD 12",
+                    "GESTION ROSCE PC ODD 13",
+                    "GESTION ROSCE PC ODD 14",
+                    "GESTION ROSCE PC ODD 15",
+                    "GESTION ROSCE PC ODD 16",
+                    "GESTION ROSCE PC ODD 17",
+                    "GESTION CONTROLE DE GESTION",
+                    "GESTION CONTROLE DE GESTION DIVISION DETENTRICE",
+                    "GESTION CONTROLE DE GESTION DIVISION SURVEILLANCE",
+                    "GESTION CONTROLE DE GESTION DIVISION EXECUTANTE",
+                    "GESTION CONTROLE DES COMPTES",
+                    "GESTION CONTROLE DES COMPTES DIVISION DETENTRICE",
+                    "GESTION CONTROLE DES COMPTES DIVISION SURVEILLANCE",
+                    "GESTION CONTROLE DES COMPTES DIVISION EXECUTANTE",
+            };
+            for(String libelle : listChaineValue) {
+                FlbOeChaineValeur flbOeChaineValeur = new FlbOeChaineValeur();
+                flbOeChaineValeur.setCode(libelle);
+                flbOeChaineValeur.setLibelle(libelle);
+                flbOeChaineValeur.setDescription(libelle);
+
+                flbOeChaineValeur.setIdChambre(flbOeChambre.getId());
+                FlbOeChaineValeur flbOeChaineValeur1 = this.flbOeChaineValeurInterface.create(flbOeChaineValeur);
+
+
+                String [] listSistributiooon = {"d'achat","de production","de production",  "de transformation",  "de vente"};
+
+                for(String lib : listSistributiooon) {
+                    String libeller = flbOeChaineValeur.getLibelle() + " chaine de distribution "+lib;
+                    FlbOeChaineDistribution flbOeChaineDistribution = new FlbOeChaineDistribution();
+                    flbOeChaineDistribution.setCode(lib);
+                    flbOeChaineDistribution.setLibelle(libeller);
+                    flbOeChaineDistribution.setDescription(libeller);
+                    flbOeChaineDistribution.setIdChaineValeur(flbOeChaineValeur1.getId());
+                    this.flbOeChaineDistributionInterface.create(flbOeChaineDistribution);
+
+                }
+
+            }
+        }
+    }
+    @Override
+    public void initFilesFlboe(jsonFlboe flboe) {
+        jsonFlbChambre[] flbChambres = flboe.getData();
+        for(jsonFlbChambre jsonFlbChambre: flbChambres){
+            FlbOeChambre flbOeChambre = new FlbOeChambre();
+            flbOeChambre.setCode(jsonFlbChambre.getCode());
+            flbOeChambre.setLibelle(jsonFlbChambre.getLibelle());
+            flbOeChambre.setDescription(jsonFlbChambre.getDescription());
+            FlbOeChambre flbOeChambre1 = this.flbOeChambreInterface.create(flbOeChambre);
+
+            jsonFlbOeCV[] flbChaineValeurs = jsonFlbChambre.getChild();
+            if(flbChaineValeurs != null && flbChaineValeurs.length>0) {
+                for (jsonFlbOeCV jsonFlbChaineValeur : flbChaineValeurs) {
+                    FlbOeChaineValeur flbOeChaineValeur = new FlbOeChaineValeur();
+                    flbOeChaineValeur.setCode(jsonFlbChaineValeur.getCode());
+                    flbOeChaineValeur.setLibelle(jsonFlbChaineValeur.getLibelle());
+                    flbOeChaineValeur.setDescription(jsonFlbChaineValeur.getDescription());
+                    flbOeChaineValeur.setIdChambre(flbOeChambre1.getId());
+                    FlbOeChaineValeur flbOeChaineValeur1 = this.flbOeChaineValeurInterface.create(flbOeChaineValeur);
+
+                    jsonFlbOeCD[] flbChaineDistributions = jsonFlbChaineValeur.getChild();
+                    if(flbChaineDistributions != null && flbChaineDistributions.length>0) {
+                        for (jsonFlbOeCD jsonFlbChaineDistribution : flbChaineDistributions) {
+                            FlbOeChaineDistribution flbOeChaineDistribution = new FlbOeChaineDistribution();
+                            flbOeChaineDistribution.setCode(jsonFlbChaineDistribution.getCode());
+                            flbOeChaineDistribution.setLibelle(jsonFlbChaineDistribution.getLibelle());
+                            flbOeChaineDistribution.setDescription(jsonFlbChaineDistribution.getDescription());
+                            flbOeChaineDistribution.setIdChaineValeur(flbOeChaineValeur1.getId());
+                             this.flbOeChaineDistributionInterface.create(flbOeChaineDistribution);
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+
+    @Override
+    public void initFilesFlbose(jsonFlbose flbose) {
+        jsonFlbOseAgenceODD[] flbOseAgenceODDS = flbose.getData();
+        for(jsonFlbOseAgenceODD jsonFlbOseAgenceODD: flbOseAgenceODDS){
+            FlbOseAgenceOdd flbOseAgenceOdd = new FlbOseAgenceOdd();
+            flbOseAgenceOdd.setCode(jsonFlbOseAgenceODD.getCode());
+            flbOseAgenceOdd.setLibelle(jsonFlbOseAgenceODD.getLibelle());
+            flbOseAgenceOdd.setDescription(jsonFlbOseAgenceODD.getDescription());
+            FlbOseAgenceOdd flbOseAgenceOdd1 = this.flbOseAgenceOddInterface.create(flbOseAgenceOdd);
+
+            jsonFlbOseAgenceODDChild[] jsonFlbOseAgenceODDChildren = jsonFlbOseAgenceODD.getChild();
+            if(jsonFlbOseAgenceODDChildren != null && jsonFlbOseAgenceODDChildren.length>=2) {
+                jsonFlbOseAgenceODDChild cibles = jsonFlbOseAgenceODDChildren[0];
+                jsonFlbOseAgenceODDChild indicateurs = jsonFlbOseAgenceODDChildren[1  ];
+
+                if(cibles != null ) {
+                    for (jsonFlboseCible jsonFlbChaineDistribution : cibles.getChild()) {
+                        System.out.println(jsonFlbChaineDistribution);
+                        FlbOseCible flbOseCible = new FlbOseCible();
+                        flbOseCible.setCode(jsonFlbChaineDistribution.getCode());
+                        flbOseCible.setLibelle(jsonFlbChaineDistribution.getLibelle());
+                        flbOseCible.setDescription(jsonFlbChaineDistribution.getDescription());
+                        flbOseCible.setIdAgenceOdd(flbOseAgenceOdd1.getId());
+                        this.flbOseCibleInterface.create(flbOseCible);
+                    }
+                }
+                if(indicateurs != null ) {
+                    for (jsonFlboseCible jsonFlboseCible : indicateurs.getChild()) {
+                        FlbOseIndicateur flbOseIndicateur = new FlbOseIndicateur();
+                        flbOseIndicateur.setCode(jsonFlboseCible.getCode());
+                        flbOseIndicateur.setLibelle(jsonFlboseCible.getLibelle());
+                        flbOseIndicateur.setDescription(jsonFlboseCible.getDescription());
+                        flbOseIndicateur.setIdAgenceOdd(flbOseAgenceOdd1.getId());
+                        this.flbOseIndicateurInterface.create(flbOseIndicateur);
+                    }
+                }
+            }
+        }
+    }
+
+    public double getFil(){
+        return this.fillChaineDistributionInterface.getCountAll() + this.fillChaineValeurInterface.getCountAll() +this.fillInstitutionInterface.getCountAll() + 1;
+    }
+    @Override
+    public double getFillStat(int stage, Long id) {
+        if(stage == 1){
+            return 1;
+        }else if(stage == 2){
+            return this.fillChaineDistributionInterface.getCountByChaineValue(id)+1;
+        }else if(stage == 3){
+            return this.fillChaineDistributionInterface.getCountByInsitution(id)+ this.fillChaineValeurInterface.getCountByInstitution(id)+ +1;
+        }else{
+            return this.getFil();
+        }
+    }
+
+
+
+    public  int getFlboe(){
+        return this.flbOeChaineDistributionInterface.getCountAll() + this.flbOeChaineValeurInterface.getCountAll() + this.flbOeChambreInterface.getCountAll() +1;
+    }
+
+    @Override
+    public double getFlboeStat(int stage, Long id) {
+        if(stage == 1){
+            return 1;
+        }else if(stage == 2){
+            return this.flbOeChaineDistributionInterface.getCountByChaineValue(id)+1;
+        }else if(stage == 3){
+            return this.flbOeChaineDistributionInterface.getCountByChambre(id)+ this.flbOeChaineValeurInterface.getCountByChambre(id)+1;
+        }else{
+            return this.getFlboe();
+        }
+    }
+
+    @Override
+    public double getFlboseStat(int stage, Long id) {
+        double fil_flboe =  this.getFlboe() + this.getFil()+ 1;
+        if(stage == 1){
+            return fil_flboe;
+        }else if(stage == 2){
+            return fil_flboe * (this.flbOseCibleInterface.getCountByAgenceOdd(id) +1);
+        }else if(stage == 3){
+            return fil_flboe * (this.flbOseIndicateurInterface.getCountByAgenceOdd(id) +1);
+        }else if(stage == 4){
+            return fil_flboe * (this.flbOseIndicateurInterface.getCountByAgenceOdd(id) + this.flbOseCibleInterface.getCountByAgenceOdd(id) +3) ;
+        }else{
+            return fil_flboe * (this.flbOseCibleInterface.getCountAll() +  this.flbOseIndicateurInterface.getCountAll()+ flbOseAgenceOddInterface.getCountAll()+1);
+        }
+    }
+
+    public double getFelm (){
+        return  this.getFlboeStat(50,1L) +  this.getFlboseStat(50,1L) + this.getFillStat(50,1L) + 1;
+    }
+
+    @Override
+    public double getFlbemStat(int stage, Long id) {
+        double felm = this.getFelm();
+        double pays = EnumsValue.PAYS*felm;
+        if(stage == 1){
+            //canton
+            return felm;
+        }else if(stage == 2){
+            //commune
+            double value = (EnumsValue.CANTON*felm) +1;
+            return value;
+
+        }else if(stage == 3){
+            //prefecture
+            double value = (((EnumsValue.CANTON +1) * EnumsValue.PREFECTURE )*felm) +1;
+            return value;
+        }else if(stage == 4){
+            //region
+            double value = (((((EnumsValue.CANTON +1) * EnumsValue.PREFECTURE ) +1) * EnumsValue.REGION )*felm) +1;
+            return value;
+        }else if(stage == 5){
+            //pays
+            double value = pays +1;
+            return value;
+        }else if(stage == 6){
+            //zonemonetaie
+
+            double child = (this.paysImp.getCountByZoneMonetaire(id) +1) *pays;
+            double value = child +1;
+            return value;
+        }else if(stage == 7){
+            //continent
+            double child =  ((this.paysImp.getCountByContinent(id) + this.zoneMonnetaireImp.getCountByContinent(id)) + 1)*pays;
+            double value = child +1;
+            return value;
+        }else{
+            //monde
+            double child = (this.paysImp.getCountAll() + this.zoneMonnetaireImp.getCountAll() + this.continentInt.getCountAll())*pays;
+            double value = child+1;
+            return value;
+        }
+    }
+
+    @Override
+    public double getDecoupage(int stage) {
+        if(stage == 1){
+            //canton
+            return cantonImp.getCountAll();
+        }else if(stage == 2){
+            //commune
+            return communeImp.getCountAll();
+
+        }else if(stage == 3){
+            //prefecture
+            return this.prefectureImp.getCountAll();
+        }else if(stage == 4){
+            return this.regionImp.getCountAll();
+        }else if(stage == 5){
+            //pays
+            return this.paysImp.getCountAll();
+        }else if(stage == 6){
+            return this.zoneMonnetaireImp.getCountAll();
+        }else if(stage == 7){
+            //continent
+            return this.continentInt.getCountAll();
+        }else{
+            return 1;
+        }
+    }
+
+    @Override
+    public double getDecoupageGeo(int stage, Long id) {
+        double felm = 1;
+        double pays = EnumsValue.PAYS;
+        if(stage == 1){
+            //canton
+            return EnumsValue.CANTON;
+        }else if(stage == 2){
+            //commune
+            double value = EnumsValue.COMMUNE;
+            return value;
+
+        }else if(stage == 3){
+            //prefecture
+            double value = EnumsValue.PREFECTURE;
+            return value;
+        }else if(stage == 4){
+            //region
+            double value = EnumsValue.REGION;
+            return value;
+        }else if(stage == 5){
+            //pays
+            double value = EnumsValue.PAYS;
+            return value;
+        }else if(stage == 6){
+            //zonemonetaie
+
+            double child = (this.paysImp.getCountByZoneMonetaire(id) +1) *pays;
+            double value = child +1;
+            return value;
+        }else if(stage == 7){
+            //continent
+            double child =  ((this.paysImp.getCountByContinent(id) + this.zoneMonnetaireImp.getCountByContinent(id)) + 1)*pays;
+            double value = child +1;
+            return value;
+        }else{
+            //monde
+            double child = (this.paysImp.getCountAll() + this.zoneMonnetaireImp.getCountAll() + this.continentInt.getCountAll())*pays;
+            double value = child+1;
+            return value;
+        }
+    }
+
+
+    public void matchFelmEntities (){
+        List<FlbOseCible> flbOseCibleList = this.flbOseCibleInterface.getAll();
+        List<FlbOseIndicateur> flbOseIndicateurList = this.flbOseIndicateurInterface.getAll();
+        List<FlbOeChambre> flbOeChambreList  = this.flbOeChambreInterface.getAll();
+        List<FillInstitution> fillInstitutionList = this.fillInstitutionInterface.getAll();
+        for (FlbOseCible flbOseCible : flbOseCibleList){
+            for(FillInstitution fillInstitution : fillInstitutionList){
+                CibleInstitution cibleInstitution = new CibleInstitution();
+                cibleInstitution.setIdCible(flbOseCible.getId());
+                cibleInstitution.setIdInstitution(flbOseCible.getId());
+                cibleInstitutionRepository.save(cibleInstitution);
+            }
+
+            for(FlbOeChambre flbOeChambre : flbOeChambreList) {
+                CibleChambre cibleChambre = new CibleChambre();
+                cibleChambre.setIdCible(flbOseCible.getId());
+                cibleChambre.setIdChambre(flbOeChambre.getId());
+                cibleChambreRepository.save(cibleChambre);
+            }
+        }
+
+        for (FlbOseIndicateur flbOseIndicateur : flbOseIndicateurList){
+            for(FillInstitution fillInstitution : fillInstitutionList){
+                IndicateurInstitution indicateurInstitution = new IndicateurInstitution();
+                indicateurInstitution.setIdIndicateur(flbOseIndicateur.getId());
+                indicateurInstitution.setIdInstitution(flbOseIndicateur.getId());
+                indicateurInstitutionRepository.save(indicateurInstitution);
+            }
+
+            for(FlbOeChambre flbOeChambre : flbOeChambreList) {
+                IndicateurChambre indicateurChambre = new IndicateurChambre();
+                indicateurChambre.setIdIndicateur(flbOseIndicateur.getId());
+                indicateurChambre.setIdChambre(flbOeChambre.getId());
+                indicateurChambreRepository.save(indicateurChambre);
+            }
+        }
+    }
+
+    public void buildOfStage(Long type1, List<Default> elementsOneList,Long type2, List<Default> elementsTwoList ){
+        for (Default element1 : elementsOneList){
+            for(Default element2 : elementsTwoList){
+               AffectationFranchise affectationFranchise = new AffectationFranchise();
+               affectationFranchise.setPercent(0);
+               affectationFranchise.setIdTypeProduitParent(type1);
+               affectationFranchise.setIdElementParent(element1.getId());
+               affectationFranchise.setIdTypeProduitChild(type2);
+               affectationFranchise.setIdElementParent(element2.getId());
+               affectationFranchise.setState(0);
+                affectationFranchiseRepository.save(affectationFranchise);
+            }
+
+        }
+    }
+    @Override
+    public double builder() {
+        List<FlbOseAgenceOdd> agenceOddList = this.flbOseAgenceOddInterface.getAll();
+        List<FlbOseCible> flbOseCibleList = this.flbOseCibleInterface.getAll();
+        List<FlbOseIndicateur> flbOseIndicateurList = this.flbOseIndicateurInterface.getAll();
+        List<FlbOeChambre> flbOeChambreList  = this.flbOeChambreInterface.getAll();
+        List<FillInstitution> fillInstitutionList = this.fillInstitutionInterface.getAll();
+        List<Continent> continentList = this.continentInt.getContinent();
+
+
+        return 0.0;
+    }
+}
